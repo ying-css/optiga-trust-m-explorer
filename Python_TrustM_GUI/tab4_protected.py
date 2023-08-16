@@ -861,15 +861,15 @@ class Tab_KeyConfidentialUpdate(wx.Panel):
         self.sign_algo = wx.ComboBox(self, 1, choices=sign_algo_list, style=wx.CB_READONLY,  size = wx.Size(178, -1))
         self.sign_algo.SetFont(textctrlfont)
         
-        self.keypath = config.EXEPATH + "/ex_protected_update_data_set/samples/payload/key/ecc_secp256r1_test.pem"
+        self.keypath = config.EXEPATH + "/ex_protected_update_data_set/samples/payload/key/ecc256test_priv.pem"
         text_keydata = wx.StaticText(self, 0, " privkey_data:")
-        self.keydata = wx.TextCtrl(self, 1, value= "ecc_secp256r1_test.pem", style=wx.CB_READONLY,  size = wx.Size(178, -1))
+        self.keydata = wx.TextCtrl(self, 1, value= "ecc256test_priv.pem", style=wx.CB_READONLY,  size = wx.Size(178, -1))
         self.keydata.SetFont(textctrlfont)
         
         #added a new input space to include the pub key file
-        self.pubkeypath = config.EXEPATH + "/ex_protected_update_data_set/samples/payload/key/client1_pubkey.der"
+        self.pubkeypath = config.EXEPATH + "/ex_protected_update_data_set/samples/payload/key/ecc256test_pub.der"
         text_pubkeydata = wx.StaticText(self, 0, "pubkey_data:")
-        self.pubkeydata = wx.TextCtrl(self, 1, value= "client1_pubkey.der", style=wx.CB_READONLY,  size = wx.Size(178, -1))
+        self.pubkeydata = wx.TextCtrl(self, 1, value= "ecc256test_pub.der", style=wx.CB_READONLY,  size = wx.Size(178, -1))
         self.pubkeydata.SetFont(textctrlfont)
         
         self.priv_keypath = config.EXEPATH + "/scripts/certificates/sample_ec_256_priv.pem"
@@ -1069,7 +1069,7 @@ class Tab_KeyConfidentialUpdate(wx.Panel):
         some_dir= config.EXEPATH + "/ex_protected_update_data_set/samples/payload/key/"
         
         openFileDialog.SetDirectory(some_dir)
-        openFileDialog.SetFilename("ecc_secp256r1_test.pem")
+        openFileDialog.SetFilename("ecc256test_priv.pem")
         
         if openFileDialog.ShowModal() ==wx.ID_CANCEL:
             
@@ -1094,7 +1094,7 @@ class Tab_KeyConfidentialUpdate(wx.Panel):
         some_dir= config.EXEPATH + "/ex_protected_update_data_set/samples/payload/key/"
         
         openFileDialog.SetDirectory(some_dir)
-        openFileDialog.SetFilename("client1_pubkey.der")
+        openFileDialog.SetFilename("ecc256test_pub.der")
         
         if openFileDialog.ShowModal() ==wx.ID_CANCEL:
             
