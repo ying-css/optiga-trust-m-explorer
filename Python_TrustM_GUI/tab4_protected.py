@@ -2202,7 +2202,7 @@ class Tab_RsaConfidentialUpdate(wx.Panel):
         self.sign_algo.SetFont(textctrlfont)
         
         self.keypath = config.EXEPATH + "/ex_protected_update_data_set/samples/payload/key/rsa2048test_priv.pem"
-        text_keydata = wx.StaticText(self, 0, "key_data:")
+        text_keydata = wx.StaticText(self, 0, "privkey_data:")
         self.keydata = wx.TextCtrl(self, 1, value= "rsa2048test_priv.pem", style=wx.CB_READONLY,  size = wx.Size(178, -1))
         self.keydata.SetFont(textctrlfont)
         
