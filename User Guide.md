@@ -48,7 +48,7 @@ This document is intended for the users who wish to explore the functionalities 
 
   - [3.3.3 AES Decryption](#aes-decryption)
 
-[4. OpenSSL Engine](#openssl-engine)
+[4. OpenSSL Provider](#openssl-provider)
 
 - [4.1 ECC (Client/Server)](#ecc-clientserver)
   - [4.1.1 ECC (Client/Server) Function Description](#ecc-clientserver-function-description)
@@ -628,113 +628,10 @@ To Decrypt the message, Select "AES Decrypt" to decrypt and display the decrypte
 
 [^Figure 47]: Data Input decrypted using AES CBC Mode
 
-# OpenSSL Engine
+# OpenSSL Provider
 
-This section shows you the OpenSSL-Engine functions of the OPTIGA™ Trust M . The OpenSSL-Engine can be used to create an ECC(Client/Server), RSA(Client/Server) and can also be used for random number generation.
+This section shows you the OpenSSL-Provider functions of the OPTIGA™ Trust M . The OpenSSL-Provider can be used to create RSA(Client/Server) and can also be used for random number generation.
 
-## ECC (Client/Server)
-
-The ECC(Client/Server) is a demonstration to show the use of the Trust M for secure communications between client and server.
-
-Select "ECC (Client/Server)"
-
-![](images/OpenSSL/ECC_Client_Server/ecc_client_server_menu.png)
-
-[^Figure 48]: OpenSSL-Engine ECC (Client/Server) Menu Screen
-
-## ECC (Client/Server) Function Description
-
-ECC (Client/Server) Functions described
-
-![](images/OpenSSL/ECC_Client_Server/clientserver_function_1.png)
-
-[^Figure 49]: OpenSSL-Engine ECC (Client/Server) Function Description part 1
-
-![](images/OpenSSL/ECC_Client_Server/clientserver_function_2.png)
-
-[^Figure 50]: OpenSSL-Engine ECC (Client/Server) Function Description part 2
-
-### ECC Create Server Certificate
-
-Generate ECC private key for server.
-
-Select "Create Server ECC Private Key"
-
-![](images/OpenSSL/ECC_Client_Server/ecc_privkey.png)
-
-[^Figure 51]: OpenSSL-Engine ECC (Client/Server) Create Private Key (for server)
-
-Generate Certificate Signing Request for ECC server keys.
-
-Select "Create Server ECC Keys CSR"
-
-![](images/OpenSSL/ECC_Client_Server/ecc_keycsr.png)
-
-[^Figure 52]: OpenSSL-Engine ECC (Client/Server) Create CSR for Server 
-
-Generate Server Certificate using Certificate Authority
-
- Select "Create Server Cert"
-
-![](images/OpenSSL/ECC_Client_Server/server_cert.png)
-
-[^Figure 53]: OpenSSL-Engine ECC (Client/Server) Create Server Cert
-
-### ECC Create Client Certificate
-
-Generate ECC Key and CSR for client.
-
-Select "Create Client ECC Key and CSR"
-
-![](images/OpenSSL/ECC_Client_Server/client_key_csr.png)
-
-[^Figure 54]: OpenSSL-Engine ECC (Client/Server) Create Client ECC key and CSR
-
-Extract Public key from CSR 
-
-Select "Extract Public Key from CSR"
-
-![](images/OpenSSL/ECC_Client_Server/pubkey.png)
-
-[^Figure 55]: OpenSSL-Engine ECC (Client/Server) Extract Public key from CSR
-
-Generate Client Certificate using Certificate Authority
-
-Select "Create Client Cert"
-
-![](images/OpenSSL/ECC_Client_Server/client_cert.png)
-
-[^Figure 56]: OpenSSL-Engine ECC (Client/Server) Create Client Certificate
-
-### ECC Start an OpenSSL Server
-
-Starting an OpenSSL server
-
-Start an OpenSSL S_Server instance by selecting "Start/Stop Server"  
-
-![](images/OpenSSL/ECC_Client_Server/startstop_server.png)
-
-[^Figure 57]: OpenSSL-Engine ECC (Client/Server) Start Server
-
-### ECC Start an OpenSSL Client
-
-Start an OpenSSL Client
-
-Start an OpenSSL Client and connect  with OpenSSL Server by selecting "Start/Stop Client"
-
-![](images/OpenSSL/ECC_Client_Server/startstop_client.png)
-
-[^Figure 58]: OpenSSL-Engine ECC (Client/Server) Start Client
-
-
-
-### ECC Secure data exchange between Server and Client
-
-Messages can be sent from Server to Client as well as Client to Server by entering input in the boxes below and selecting "Write to Client" or "Write to Server".  The message "Hello from Server" and "Hello from Client" has been successfully sent as shown in Figure 59
-
-![](images/OpenSSL/ECC_Client_Server/dataexchange.png)
-
-[^Figure 59]: OpenSSL-Engine ECC (Client/Server) Communication
 
 ## RSA (Client/Server)
 
@@ -752,11 +649,11 @@ RSA (Client/Server) Functions described
 
 ![](images/OpenSSL/RSA_Client_Server/rsa_clientserver_function_1.png)
 
-[^Figure 61]: OpenSSL-Engine RSA (Client/Server) Function Description part 1
+[^Figure 61]: OpenSSL-Provider RSA (Client/Server) Function Description part 1
 
 ![](images/OpenSSL/RSA_Client_Server/rsa_clientserver_function_2.png)
 
-[^Figure 62]: OpenSSL-Engine RSA (Client/Server) Function Description part 2
+[^Figure 62]: OpenSSL-Provider RSA (Client/Server) Function Description part 2
 
 ### RSA Create Server Certificate
 
@@ -766,7 +663,7 @@ Select "Create Server Private Key"
 
 ![](images/OpenSSL/RSA_Client_Server/rsa_privkey.png)
 
-[^Figure 63]: OpenSSL-Engine RSA (Client/Server) Create Private Key (for server)
+[^Figure 63]: OpenSSL-Provider RSA (Client/Server) Create Private Key (for server)
 
 Generate Certificate Signing Request for server keys.
 
@@ -774,7 +671,7 @@ Select "Create Server Keys CSR"
 
 ![](images/OpenSSL/RSA_Client_Server/rsa_keycsr.png)
 
-[^Figure 64]: OpenSSL-Engine RSA (Client/Server) Create CSR for Server 
+[^Figure 64]: OpenSSL-Provider RSA (Client/Server) Create CSR for Server 
 
 Generate Server Certificate using Certificate Authority
 
@@ -782,7 +679,7 @@ Generate Server Certificate using Certificate Authority
 
 ![](images/OpenSSL/RSA_Client_Server/rsa_server_cert.png)
 
-[^Figure 65]: OpenSSL-Engine RSA (Client/Server) Create Server Cert
+[^Figure 65]: OpenSSL-Provider RSA (Client/Server) Create Server Cert
 
 ### RSA Create Client Certificate
 
@@ -792,7 +689,7 @@ Select "Create Client RSA Key and CSR"
 
 ![](images/OpenSSL/RSA_Client_Server/rsa_client_key_csr.png)
 
-[^Figure 66]: OpenSSL-Engine RSA (Client/Server) Create Client RSA key and CSR
+[^Figure 66]: OpenSSL-Provider RSA (Client/Server) Create Client RSA key and CSR
 
 Extract Public key from CSR 
 
@@ -800,7 +697,7 @@ Select "Extract Public Key from CSR"
 
 ![](images/OpenSSL/RSA_Client_Server/rsa_pubkey.png)
 
-[^Figure 67]: OpenSSL-Engine RSA (Client/Server) Extract Public key from CSR
+[^Figure 67]: OpenSSL-Provider RSA (Client/Server) Extract Public key from CSR
 
 Generate Client Certificate using Certificate Authority
 
@@ -808,7 +705,7 @@ Select "Create Client Cert"
 
 ![](images/OpenSSL/RSA_Client_Server/rsa_client_cert.png)
 
-[^Figure 68]: OpenSSL-Engine RSA (Client/Server) Create Client Certificate
+[^Figure 68]: OpenSSL-Provider RSA (Client/Server) Create Client Certificate
 
 ### RSA Start an OpenSSL Server
 
@@ -818,7 +715,7 @@ Start an OpenSSL S_Server instance by selecting "Start/Stop Server"
 
 ![](images/OpenSSL/RSA_Client_Server/rsa_startstop_server.png)
 
-[^Figure 69]: OpenSSL-Engine RSA (Client/Server) Start Server
+[^Figure 69]: OpenSSL-Provider RSA (Client/Server) Start Server
 
 ### RSA Start an OpenSSL Client
 
@@ -828,7 +725,7 @@ Start an OpenSSL Client and connect  with OpenSSL Server by selecting "Start/Sto
 
 ![](images/OpenSSL/RSA_Client_Server/rsa_startstop_client.png)
 
-[^Figure 70]: OpenSSL-Engine RSA (Client/Server) Start Client
+[^Figure 70]: OpenSSL-Provider RSA (Client/Server) Start Client
 
 
 
@@ -838,7 +735,7 @@ Messages can be sent from Server to Client as well as Client to Server by enteri
 
 ![](images/OpenSSL/RSA_Client_Server/rsa_dataexchange.png)
 
-[^Figure 71]: OpenSSL-Engine RSA (Client/Server) Communication
+[^Figure 71]: OpenSSL-Provider RSA (Client/Server) Communication
 
 
 
@@ -847,7 +744,7 @@ Messages can be sent from Server to Client as well as Client to Server by enteri
 
 This section shows to use OpenSSL libraries to generate random number based on Encoding type hex or base64  with indicated number of bytes to be generated.
 
-Open the OpenSSL-Engine In Main 
+Open the OpenSSL-Provider In Main 
 
 Select "RNG".
 
