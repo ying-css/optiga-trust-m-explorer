@@ -641,7 +641,7 @@ Select "RSA (Client/Server)"
 
 ![](images/OpenSSL/RSA_Client_Server/rsa_client_server_menu.png)
 
-[^Figure 60]: OpenSSL-Engine RSA (Client/Server) Menu Screen
+[^Figure 60]: OpenSSL-Provider RSA (Client/Server) Menu Screen
 
 ## RSA (Client/Server) Function Description
 
@@ -657,21 +657,13 @@ RSA (Client/Server) Functions described
 
 ### RSA Create Server Certificate
 
-Generate private key for server.
+Generate private key and CSR for server.
 
-Select "Create Server Private Key"
+Select "Create Server Private Key and CSR"
 
 ![](images/OpenSSL/RSA_Client_Server/rsa_privkey.png)
 
-[^Figure 63]: OpenSSL-Provider RSA (Client/Server) Create Private Key (for server)
-
-Generate Certificate Signing Request for server keys.
-
-Select "Create Server Keys CSR"
-
-![](images/OpenSSL/RSA_Client_Server/rsa_keycsr.png)
-
-[^Figure 64]: OpenSSL-Provider RSA (Client/Server) Create CSR for Server 
+[^Figure 63]: OpenSSL-Provider RSA (Client/Server) Create Private Key and Certificate Signing Request (for server)
 
 Generate Server Certificate using Certificate Authority
 
@@ -690,14 +682,6 @@ Select "Create Client RSA Key and CSR"
 ![](images/OpenSSL/RSA_Client_Server/rsa_client_key_csr.png)
 
 [^Figure 66]: OpenSSL-Provider RSA (Client/Server) Create Client RSA key and CSR
-
-Extract Public key from CSR 
-
-Select "Extract Public Key from CSR"
-
-![](images/OpenSSL/RSA_Client_Server/rsa_pubkey.png)
-
-[^Figure 67]: OpenSSL-Provider RSA (Client/Server) Extract Public key from CSR
 
 Generate Client Certificate using Certificate Authority
 
@@ -736,7 +720,6 @@ Messages can be sent from Server to Client as well as Client to Server by enteri
 ![](images/OpenSSL/RSA_Client_Server/rsa_dataexchange.png)
 
 [^Figure 71]: OpenSSL-Provider RSA (Client/Server) Communication
-
 
 
 
