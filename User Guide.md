@@ -445,14 +445,14 @@ This section shows you the DAC Provisioning for Matter devices using the OPTIGAâ
 ![](images/General_Features/matter_dac_provisioning/dac_functions.png)
 [^Figure 30]: Matter DAC Provisioning functions described
 
-## Read Pre-Provisioned Cert
+### Read Pre-Provisioned Cert
 Reads IFX pre-provisioned certificate from OID 0xE0E0
 
 To read the IFX pre-provisioned certificate, select "Read IFX Pre-Provisioned Cert".
 ![](images/General_Features/matter_dac_provisioning/read_cert.png)
 [^Figure 31]: Displays information about the pre-provisioned certificate
 
-## Extract Public Key From Cert
+### Extract Public Key From Cert
 Extracts the public key from the certificate and saves it to a file named pubkey_e0e0.pem.
 
 To extract the public key from the certificate, select "Extract Public Key From Cert".
@@ -466,26 +466,26 @@ To generate the CSR, select "Generate DAC CSR Using Public Key".
 ![](images/General_Features/matter_dac_provisioning/gen_csr.png)
 [^Figure 33]: CSR generated from the public key
 
-## Generate DAC Cert
+### Generate DAC Cert
 Generates a new DAC certificate by signing the CSR with the Matter Test PAI certificate.
 
 To generate the certificate, select "Generate DAC Cert Using Public Key".
 ![](images/General_Features/matter_dac_provisioning/gen_cert.png)
 [^Figure 34]: DAC certificate generated from the public key
 
-## Write DAC Cert
+### Write DAC Cert
 Writes the new DAC certificate to OID 0xE0E3.
 To write the new DAC certificate into 0xE0E3, select "Write Test DAC".
 ![](images/General_Features/matter_dac_provisioning/write_dac.png)
 [^Figure 35]: Displays information of the new DAC certificate
 
-## Write Matter Test PAI
+### Write Matter Test PAI
 Writes the Matter Test PAI certificate to OID 0xE0E8.
 To write the Matter Test PAI into 0xE0E8, select "Write Matter Test PAI".
 ![](images/General_Features/matter_dac_provisioning/write_pai.png)
 [^Figure 36]: Matter Test PAI written to 0xE0E8.
 
-## Write Test CD
+### Write Test CD
 Writes the Test CD to OID 0xF1E0.
 To write Test CD into 0xF1E0, select "Write Test CD".
 ![](images/General_Features/matter_dac_provisioning/write_cd.png)
