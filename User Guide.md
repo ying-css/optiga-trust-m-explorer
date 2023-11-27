@@ -27,6 +27,7 @@ This document is intended for the users who wish to explore the functionalities 
 
 
 - [2.4 Write Metadata](#write-metadata)
+- [2.5 Matter DAC Provisioning](#matter-dac-provisioning)
 
 
 [3. Cryptographic Functions](#cryptographic-functions)
@@ -386,7 +387,7 @@ Write metadata functions description
 ![](images/General_Features/write_metadata/functions.png)
 [^Figure 24]: Write Metadata functions described
 
-### Read Metdata
+### Read Metadata
 Read Metadata from specified Object ID
 
 To read metadata from an Object ID, select one Object ID from the six types of the Data Objects to read from, then click "Read Metdata". For this example *0xF1D0* is selected
@@ -437,6 +438,58 @@ To load custom metadata into target OID
 
 ![](images/General_Features/write_metadata/custom_meta_success.png)
 [^Figure 29]: custom metadata write success
+
+## Matter DAC Provisioning
+This section shows you the DAC Provisioning for Matter devices using the OPTIGA™ Trust M. It involves reading a pre-provisioned certificate from the chip, extracting the public key, generating a new DAC certificate signed by a trusted Matter CA and writing the DAC certificate, Matter Test PAI and Test CD into the Object IDs.
+
+![](images/General_Features/matter_dac_provisioning/dac_functions.png)
+[^Figure 30]: Matter DAC Provisioning functions described
+
+## Read Pre-Provisioned Cert
+Reads IFX pre-provisioned certificate from OID 0xE0E0
+
+To read the IFX pre-provisioned certificate, select "Read IFX Pre-Provisioned Cert".
+![](images/General_Features/matter_dac_provisioning/read_cert.png)
+[^Figure 31]: Displays information about the pre-provisioned certificate
+
+## Extract Public Key From Cert
+Extracts the public key from the certificate and saves it to a file named pubkey_e0e0.pem.
+
+To extract the public key from the certificate, select "Extract Public Key From Cert".
+![](images/General_Features/matter_dac_provisioning/extract_pubkey.png)
+[^Figure 32]: Displays the public key extracted from the certificate
+
+## Generate DAC CSR
+Generates a Certificate Signing Request(CSR) using the public key.
+
+To generate the CSR, select "Generate DAC CSR Using Public Key".
+![](images/General_Features/matter_dac_provisioning/gen_csr.png)
+[^Figure 33]: CSR generated from the public key
+
+## Generate DAC Cert
+Generates a new DAC certificate by signing the CSR with the Matter Test PAI certificate.
+
+To generate the certificate, select "Generate DAC Cert Using Public Key".
+![](images/General_Features/matter_dac_provisioning/gen_cert.png)
+[^Figure 34]: DAC certificate generated from the public key
+
+## Write DAC Cert
+Writes the new DAC certificate to OID 0xE0E3.
+To write the new DAC certificate into 0xE0E3, select "Write Test DAC".
+![](images/General_Features/matter_dac_provisioning/write_dac.png)
+[^Figure 35]: Displays information of the new DAC certificate
+
+## Write Matter Test PAI
+Writes the Matter Test PAI certificate to OID 0xE0E8.
+To write the Matter Test PAI into 0xE0E8, select "Write Matter Test PAI".
+![](images/General_Features/matter_dac_provisioning/write_pai.png)
+[^Figure 36]: Matter Test PAI written to 0xE0E8.
+
+## Write Test CD
+Writes the Test CD to OID 0xF1E0.
+To write Test CD into 0xF1E0, select "Write Test CD".
+![](images/General_Features/matter_dac_provisioning/write_cd.png)
+[^Figure 37]: Test CD written to 0xF1E0.
 
 # Cryptographic Functions
 
