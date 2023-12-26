@@ -28,7 +28,7 @@ This document is intended for the users who wish to explore the functionalities 
 
 - [2.4 Write Metadata](#write-metadata)
 - [2.5 Matter DAC Provisioning](#matter-dac-provisioning)
-
+- [2.5 Late-Stage Provisioning](#late-stage-provisioning)
 
 [3. Cryptographic Functions](#cryptographic-functions)
 
@@ -490,6 +490,51 @@ Writes the Test CD to OID 0xF1E0.
 To write Test CD into 0xF1E0, select "Write Test CD".
 ![](images/General_Features/matter_dac_provisioning/write_cd.png)
 [^Figure 37]: Test CD written to 0xF1E0.
+
+## Late-Stage Provisioning
+
+This section shows you the provisioning of the OPTIGA™ Trust M MTR chips. It is used to write Matter Test Credentials or Matter Productive Credentials and do post-processing such as Verifying the Configuration and Modifying the Security Monitor Configuration
+
+
+### Functions 
+
+Late-Stage Provisioning functions description
+
+![](images/General_Features/late_stage_prov/functions.png)
+
+[^Figure 38]:Late-Stage Provisioning functions described
+
+### Write Matter Credentials
+
+To write Matter Credentials to the OPTIGA Trust M MTR.
+
+To write the Matter Credentials, select "Write Matter Credentials".
+
+### Provision Matter Production Credentials 
+
+Provision the Matter Production Credentials from the Bundle File.
+
+To provision the Matter Production Credentials, select the Bundle file and optionally the location of the Certificate Declaration, then select "Provision Matter Production Credentials".
+
+
+### Provision Matter Test Credentials
+
+Generate and write Matter Test Credentials (DAC, PAI and CD) to the respective OPTIGA™ Trust M object slots.
+
+To write Matter Test Credentials, click "Provision Matter Test Credentials".
+
+### Verify Configuration
+
+Test if the Matter DAC is working correctly and matches the on-chip private key. A simple ECDSA Signature Generation/Verification is implemented.
+
+To verify the configurations, click "Verify Configuration".
+
+### Modify Security Monitor Configuration
+
+To provision the Matter credentials and configure the security monitor, select the Bundle file and input the Transport Key. If a custom security monitor configuration shall be used, input this configuration in the Security Monitor input box. 
+The default configuration "0" is to disable the Security Monitor entirely.
+
+To configure the security monitor, click "Configure Security Monitor".
 
 # Cryptographic Functions
 
