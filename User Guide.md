@@ -502,13 +502,17 @@ Late-Stage Provisioning functions description
 
 ![](images/General_Features/late_stage_prov/functions.png)
 
-[^Figure 38]:Late-Stage Provisioning functions described
+[^Figure 38]:Late-Stage Provisioning functions described.
 
 ### Write Matter Credentials
 
 To write Matter Credentials to the OPTIGA Trust M MTR.
 
-To write the Matter Credentials, select "Write Matter Credentials".
+To write the Matter Credentials, select the Bundle file, location of Certificate Declaration and input the Transport Key, Then click "Write Matter Credentials".
+
+![](images/General_Features/late_stage_prov/write_credentials.png)
+
+[^Figure 39]:Writing Matter Credentials to OPTIGA Trust M MTR.
 
 ### Provision Matter Production Credentials 
 
@@ -516,6 +520,9 @@ Provision the Matter Production Credentials from the Bundle File.
 
 To provision the Matter Production Credentials, select the Bundle file and optionally the location of the Certificate Declaration, then select "Provision Matter Production Credentials".
 
+![](images/General_Features/late_stage_prov/prod_cred.png)
+
+[^Figure 40]:Provisioning Matter Production Credentials from Bundle File
 
 ### Provision Matter Test Credentials
 
@@ -523,11 +530,19 @@ Generate and write Matter Test Credentials (DAC, PAI and CD) to the respective O
 
 To write Matter Test Credentials, click "Provision Matter Test Credentials".
 
+![](images/General_Features/late_stage_prov/test_cred.png)
+
+[^Figure 41]:Provisioning Matter Test Credentials.
+
 ### Verify Configuration
 
 Test if the Matter DAC is working correctly and matches the on-chip private key. A simple ECDSA Signature Generation/Verification is implemented.
 
 To verify the configurations, click "Verify Configuration".
+
+![](images/General_Features/late_stage_prov/verify_conf.png)
+
+[^Figure 42]:Verifying configuration of Matter DAC.
 
 ### Modify Security Monitor Configuration
 
@@ -535,6 +550,10 @@ To provision the Matter credentials and configure the security monitor, select t
 The default configuration "0" is to disable the Security Monitor entirely.
 
 To configure the security monitor, click "Configure Security Monitor".
+
+![](images/General_Features/late_stage_prov/security_conf.png)
+
+[^Figure 43]:Configuring the Security Monitor
 
 # Cryptographic Functions
 
