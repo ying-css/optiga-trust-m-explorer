@@ -546,7 +546,7 @@ To verify the configurations, click "Verify Configuration".
 
 ### Modify Security Monitor Configuration
 
-To provision the Matter credentials and configure the security monitor, select the Bundle file and input the Transport Key. If a custom security monitor configuration shall be used, input this configuration in the Security Monitor input box. 
+To provision the Matter credentials and configure the security monitor, select the Bundle file, optionally the location of the Certificate Declaration and input the Transport Key. If a custom security monitor configuration shall be used, input this configuration in the Security Monitor input box. 
 The default configuration "0" is to disable the Security Monitor entirely.
 
 To configure the security monitor, click "Configure Security Monitor".
