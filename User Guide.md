@@ -733,7 +733,7 @@ Generate ECC Key and CSR for client.
 
 Select "Create Client ECC Key and CSR"
 
-![](images/OpenSSL/ECC_Client_Server/OpenSSL_Provider_ECC_serverCert.png)
+![](images/OpenSSL/ECC_Client_Server/OpenSSL_Provider_ECC_cllientprivkey.png)
 
 ![](images/OpenSSL/ECC_Client_Server/OpenSSL_Provider_ECC_clientCSR.png)
 
