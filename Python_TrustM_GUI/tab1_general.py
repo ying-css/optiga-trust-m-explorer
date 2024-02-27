@@ -1434,7 +1434,7 @@ class Tab_KEY(wx.Panel):
    
     def OnWriteSecret1 (self):
         
-        command_output = exec_cmd.createProcess("echo '0102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F202122232425262728292A2B2C2D2E2F303132333435363738393A3B3C3D3E3F40' | xxd -r -p > platform_secret.dat", None)
+        command_output = exec_cmd.createProcess(f"python3 hex_to_binary.py {'0102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F202122232425262728292A2B2C2D2E2F303132333435363738393A3B3C3D3E3F40'} > platform_secret.dat")
         
         secretoid = "0x" + self.bindsecret.GetValue()
         certfile = self.secretfile.GetValue()
@@ -1618,7 +1618,7 @@ class Tab_APP(wx.Panel):
         datain = self.input_display.GetValue()
         dataobj = "0x" + self.data.GetValue()
         
-        exec_cmd.createProcess("echo " + datain + " >writedata.txt", None)                               
+        exec_cmd.createProcess("echo " + datain + " >writedata.txt")                               
         command_output = exec_cmd.execCLI([config.EXEPATH + "/bin/trustm_data", "-w", dataobj, "-e", "-i","writedata.txt" , ])
         self.text_display.AppendText(command_output)
         self.text_display.AppendText("\n'trustm_data -w " + dataobj + " -e  -i  writedata.txt ' executed \n")
@@ -2220,8 +2220,8 @@ class Tab_META(wx.Panel):
         
         #Step1: Provisioning metadata for Trust Anchor
         self.text_display.AppendText("Provisioning for trust anchor metadata... \n")
-        command_output = exec_cmd.createProcess("echo " + TRUST_ANCHOR_META + " | xxd -r -p > trust_anchor_metadata.bin", None)
-        self.text_display.AppendText("'echo $TRUST_ANCHOR_META | xxd -r -p > trust_anchor_metadata.bin' executed \n")
+        command_output = exec_cmd.createProcess(f"python3 hex_to_binary.py {TRUST_ANCHOR_META} > trust_anchor_metadata.bin")
+        self.text_display.AppendText("'python3 hex_to_binary.py {TRUST_ANCHOR_META} > trust_anchor_metadata.bin' executed \n")
         self.text_display.AppendText("++++++++++++++++++++++++++++++++++++++++++++\n")
         
         self.text_display.AppendText("Writing trust_anchor_metadata.bin as metadata of Trust Anchor OID... \n")
@@ -2233,8 +2233,8 @@ class Tab_META(wx.Panel):
         
         #Step2: Provisioning metadata for Protected Update Secret OID
         self.text_display.AppendText("Provisioning for protected update secret metadata... \n")
-        command_output = exec_cmd.createProcess("echo " + PROTECTED_UPDATE_SECRET_META + " | xxd -r -p > protected_update_secret_metadata.bin", None)
-        self.text_display.AppendText("'$PROTECTED_UPDATE_SECRET_META xxd -r -p > protected_update_secret_metadata.bin' executed \n")
+        command_output = exec_cmd.createProcess(f"python3 hex_to_binary.py {PROTECTED_UPDATE_SECRET_META} > protected_update_secret_metadata.bin")
+        self.text_display.AppendText("'python3 hex_to_binary.py {PROTECTED_UPDATE_SECRET_META} > protected_update_secret_metadata.bin' executed \n")
         self.text_display.AppendText("++++++++++++++++++++++++++++++++++++++++++++\n")
         
         self.text_display.AppendText("Writing protected update secret metadata into secret_oid... ")
@@ -2245,8 +2245,8 @@ class Tab_META(wx.Panel):
         
         ##Set metadata for Target OID
         self.text_display.AppendText("Set metadata protected update for Target OID (Provision for Target OID)... \n")
-        command_output = exec_cmd.createProcess("echo " + TARGET_OID_META + " | xxd -r -p > targetOID_metadata.bin", None)
-        self.text_display.AppendText("'$TARGET_OID_META | xxd -r -p > targetOID_metadata.bin' executed \n")
+        command_output = exec_cmd.createProcess(f"python3 hex_to_binary.py {TARGET_OID_META} > targetOID_metadata.bin")
+        self.text_display.AppendText("'python3 hex_to_binary.py {TARGET_OID_META} > targetOID_metadata.bin' executed \n")
         self.text_display.AppendText("++++++++++++++++++++++++++++++++++++++++++++\n")
         self.text_display.AppendText("Writing targetOID_metadata.bin as metadata of Target OID... \n")
         command_output = exec_cmd.execCLI([config.EXEPATH + "/bin/trustm_metadata", "-w", target_oid, "-F", "targetOID_metadata.bin", ])
@@ -2368,8 +2368,8 @@ class Tab_META(wx.Panel):
     def OnResetAccessExec(self):
         RESET_MUD_META="2003D801FF"
         target_oid = "0x" + self.dataobject
-        exec_cmd.createProcess("echo " + RESET_MUD_META + " | xxd -r -p > mud_reset.bin", None)
-        command_output = exec_cmd.execCLI(["xxd", "mud_reset.bin", ])
+        exec_cmd.createProcess(f"python3 hex_to_binary.py {RESET_MUD_META} > mud_reset.bin")
+        command_output = exec_cmd.execCLI(["python3", "emulator.py", "mud_reset.bin", ])
         self.text_display.AppendText(command_output)
         self.text_display.AppendText("mud_reset.bin generated\n")
         self.text_display.AppendText("Writing metadata for Target OID... \n")
