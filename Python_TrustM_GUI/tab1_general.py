@@ -9,6 +9,7 @@ import os
 import subprocess
 import xml.dom.minidom
 import math
+import re
 
 class Tab_GEN(wx.Panel):
     
@@ -2764,7 +2765,321 @@ class Tab_PROV(wx.Panel):
     # then the second parent is the frame, from which we call the destruction
     def OnBack(self, evt):
         self.Parent.Parent.OnCloseWindow(None)
+
+class Tab_TEST(wx.Panel):
+    def __init__(self, parent):
+        wx.Panel.__init__(self, parent)
+        self.transport_key_value = None
+        
+        textctrlfont = wx.Font()
+        textctrlfont.SetPointSize(10)
+        buttonfont = wx.Font(12, wx.ROMAN, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
+
+        # declare the sizers
+        mainsizer = wx.BoxSizer(wx.VERTICAL)
+        mainhorisizer = wx.BoxSizer(wx.HORIZONTAL)
+
+        gdsizer1 = wx.GridSizer(rows=1, cols=2, vgap=5, hgap=10)
+        gdsizer2 = wx.GridSizer(rows=1, cols=2, vgap=5, hgap=10)
+        gdsizer3 = wx.GridSizer(rows=1, cols=2, vgap=5, hgap=10)
+        gdsizer4 = wx.GridSizer(rows=1, cols=2, vgap=5, hgap=10)
+        gdsizer7 = wx.GridSizer(rows=1, cols=2, vgap=5, hgap=10)
+        midsizer = wx.BoxSizer(wx.VERTICAL)
+
+        backbuttonsizer = wx.BoxSizer(wx.HORIZONTAL)
+
+        # declare sizers that will be in the grid1
+        woidsizer = wx.BoxSizer(wx.VERTICAL)
+        inputvaluesizer = wx.BoxSizer(wx.VERTICAL)
+        inputfilesizer = wx.BoxSizer(wx.VERTICAL)
+        
+        # instantiate the objects
+
+        button_AutoValue = wx.Button(self, 1, 'Read Auto Value', size = wx.Size(200, 30))
+        button_AutoValue.SetFont(buttonfont)
+        button_PBSValue = wx.Button(self, 2, 'Read PBS Value', size = wx.Size(200, 30))
+        button_PBSValue.SetFont(buttonfont)
+        
+        self.text_display = wx.TextCtrl(self, -1, style=wx.TE_MULTILINE | wx.TE_READONLY)
+        self.text_display.SetFont(wx.Font(11, wx.FONTFAMILY_TELETYPE, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL))
+        
+        text_OID_input = wx.StaticText(self, -1, "Write OID:")
+        text_OID_input.SetMinSize((100, -1))
+        self.OID_input = wx.TextCtrl(self)
+        self.OID_input.SetFont(textctrlfont)
+
+        text_invalue_input = wx.StaticText(self, -1, "Input Value:")
+        text_invalue_input.SetMinSize((100, -1))
+        self.invalue_input = wx.TextCtrl(self)
+        self.invalue_input.SetFont(textctrlfont)
+        
+        select_infile_button = wx.Button(self, -1, 'Select Input File', size=wx.Size(200, 50))
+        select_infile_button.SetFont(wx.Font(10, wx.ROMAN, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD))
+        self.infile_display = wx.TextCtrl(self, -1, style=wx.TE_READONLY)
+        self.infile_display.SetFont(textctrlfont)
+
+        clearimage = wx.Image(config.IMAGEPATH + "/images/clear.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap()
+        clearbutton = wx.BitmapButton(self, -1, clearimage)
+
+
+        backimage = wx.Image(config.IMAGEPATH + "/images/back.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap()
+        backbutton = wx.BitmapButton(self, -1, backimage)
+        
+        # Add buttons and text controls for selecting the archive file and extraction directory
+        select_dir_button = wx.Button(self, -1, 'Select Bundle File', size=wx.Size(200, 50))
+        select_dir_button.SetFont(wx.Font(10, wx.ROMAN, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD))
+        self.dir_display = wx.TextCtrl(self, -1, style=wx.TE_READONLY)
+        self.dir_display.SetFont(textctrlfont)
+        
+        write_button = wx.Button(self, -1, 'Write', size=wx.Size(100, 50))
+        write_button.SetFont(buttonfont)
+
+        #Add mainhorisizer to mainsizer
+        mainsizer.AddSpacer(5)
+        mainsizer.Add(mainhorisizer, 1, wx.EXPAND)
+
+        # Add Sub Sizers to the mainhorisizer
+        mainhorisizer.Add(midsizer, 1, wx.EXPAND)
+        mainhorisizer.Add(self.text_display, 2, wx.EXPAND | wx.ALL, 5)
+
+        backbuttonsizer.Add(backbutton, 0, wx.ALIGN_LEFT | wx.ALIGN_BOTTOM, 0)
+        backbuttonsizer.AddSpacer(10)
+        backbuttonsizer.Add(clearbutton, 0, wx.ALIGN_LEFT | wx.ALIGN_BOTTOM, 0)
+
+        # Add sizers to midsizer
+        midsizer.Add(gdsizer7, 0, wx.ALIGN_CENTRE | wx.ALL, 5)
+        midsizer.AddSpacer(5)
+        midsizer.Add(gdsizer1, 0, wx.ALIGN_CENTRE | wx.ALL, 5)
+        midsizer.AddSpacer(5)
+        midsizer.Add(gdsizer2, 0, wx.ALIGN_CENTRE | wx.ALL, 5)
+        midsizer.AddSpacer(5)  
+        midsizer.Add(gdsizer3, 0, wx.ALIGN_CENTRE | wx.ALL, 5)
+        midsizer.AddSpacer(5)
+        midsizer.Add(gdsizer4, 0, wx.ALIGN_CENTRE | wx.ALL, 5)
+        midsizer.AddSpacer(5)
+        midsizer.Add(write_button, 0, wx.ALIGN_CENTRE | wx.ALL, 10)
+        midsizer.AddSpacer(20)
+        midsizer.Add(backbuttonsizer, 1,wx.LEFT | wx.BOTTOM, 5)
+
+        # Add button and text inputs into gdsizer1
+        gdsizer1.Add(button_AutoValue, 0, wx.EXPAND)
+        gdsizer1.Add(button_PBSValue, 0, wx.EXPAND)
+
+        # Add text inputs and their labels into gdsizer2 to gdsizer6
+        gdsizer2.Add(text_OID_input, 0, wx.ALIGN_RIGHT | wx.ALIGN_CENTER_VERTICAL)
+        gdsizer2.Add(self.OID_input, 0, wx.EXPAND)
+
+        gdsizer3.Add(text_invalue_input, 0, wx.ALIGN_RIGHT | wx.ALIGN_CENTER_VERTICAL)
+        gdsizer3.Add(self.invalue_input, 0, wx.EXPAND)
+
+        gdsizer4.Add(select_infile_button, 0, wx.ALIGN_RIGHT | wx.ALIGN_CENTER_VERTICAL)
+        gdsizer4.Add(self.infile_display, 0, wx.EXPAND)
+        
+        gdsizer7.Add(select_dir_button, 0, wx.EXPAND)
+        gdsizer7.Add(self.dir_display, 0, wx.EXPAND)
+
+        # Set Default inputs for Text Boxes 
+        # attach objects to the sizer
+
+        write_button.Bind(wx.EVT_BUTTON, self.OnWriteOID)
+        button_AutoValue.Bind(wx.EVT_BUTTON, self.AutoValue)
+        button_PBSValue.Bind(wx.EVT_BUTTON, self.PBSValue)
+        select_dir_button.Bind(wx.EVT_BUTTON, self.OnSelectDir)
+        select_infile_button.Bind(wx.EVT_BUTTON, lambda evt: self.OnSelectFile(evt, "dat"))
+        clearbutton.Bind(wx.EVT_BUTTON, self.OnFlush)
+        backbutton.Bind(wx.EVT_BUTTON, self.OnBack)
+
+        clearbutton.SetToolTip(wx.ToolTip("Clear all textboxes."))
+        backbutton.SetToolTip(wx.ToolTip("Go back to main page."))
+        clearbutton.SetToolTip(wx.ToolTip("Clear all textboxes."))
+
+        self.SetSizer(mainsizer)
+        mainsizer.Fit(self) 
+
+        self.SetSizer(mainsizer)
+        mainsizer.Fit(self)
+        
+    def AutoValue(self, evt):
+        self.text_display.AppendText("\nExtracting AutoValue Info\n\n")
+        wx.CallLater(10, self.AutoValue1)
+
+    def AutoValue1(self):
+        extract_to = self.dir_display.GetValue()
+        auto_keys_path = os.path.join(extract_to, "auto_keys.txt")
+        
+        if os.path.exists(auto_keys_path):
+            value = self.extract_value_from_file("auto_keys.txt")
+            self.text_display.AppendText(f"Auto Value: {value}\n")
+        else:
+            self.text_display.AppendText("Error: auto_keys.txt not found\n")
+            self.text_display.AppendText("++++++++++++++++++++++++++++++++\n")
             
+    def PBSValue(self, evt):
+        self.text_display.AppendText("\nExtracting PBS Value Info\n\n")
+        wx.CallLater(10, self.PBSValue1)
+
+    def PBSValue1(self):
+        extract_to = self.dir_display.GetValue()
+        pbs_keys_path = os.path.join(extract_to, "PBS_keys.txt")
+         
+        if os.path.exists(pbs_keys_path):
+            value = self.extract_value_from_file("PBS_keys.txt")
+            self.text_display.AppendText(f"PBS Value: {value}\n")
+        else:
+            self.text_display.AppendText("Error: PBS_keys.txt not found\n")
+            self.text_display.AppendText("++++++++++++++++++++++++++++++++\n")
+            
+    def OnWriteOID(self, evt):
+        oid = self.OID_input.GetValue().strip()
+        pbs = self.extract_value_from_file("PBS_keys.txt")
+        autovalue = self.extract_value_from_file("auto_keys.txt")
+        invalue = self.invalue_input.GetValue().strip()
+        infile = self.infile_display.GetValue()
+
+        if not oid or not pbs or not autovalue:
+            wx.MessageBox("OID, PBS, and Auto Value must not be empty.", "Error", wx.OK | wx.ICON_ERROR)
+            return
+
+        if invalue and infile:
+            wx.MessageBox("Only one of Input Value or Input File Name should be provided.", "Error", wx.OK | wx.ICON_ERROR)
+            return
+
+        command = ""
+        if invalue:
+            command = f"/home/css/optiga-trust-m-explorer/Python_TrustM_GUI/linux-optiga-trust-m/bin/trustm_update_with_PBS_Auto -w {oid} -P {pbs} -A {autovalue} -I {invalue}"
+        elif infile:
+            command = f"/home/css/optiga-trust-m-explorer/Python_TrustM_GUI/linux-optiga-trust-m/bin/trustm_update_with_PBS_Auto -w {oid} -P {pbs} -A {autovalue} -i {infile}"
+        else:
+            wx.MessageBox("Either Input Value or Input File Name must be provided.", "Error", wx.OK | wx.ICON_ERROR)
+            return
+
+        self.text_display.AppendText(f"Executing command: {command}\n")
+        try:
+            command_output = subprocess.run(command, shell=True, capture_output=True, text=True)
+            self.text_display.AppendText(command_output.stdout)
+            if command_output.stderr:
+                self.text_display.AppendText(command_output.stderr)
+        except Exception as e:
+            self.text_display.AppendText(f"Error executing command: {e}\n")
+        
+    def extract_value_from_file(self, filename):
+        extract_to = self.dir_display.GetValue()
+        file_path = os.path.join(extract_to, filename)
+        if os.path.exists(file_path):
+            with open(file_path, 'r') as f:
+                content = f.read().strip()
+                parts = content.split(',')
+                if len(parts) == 2:
+                    return parts[1].strip()
+                else:
+                    self.text_display.AppendText(f"Error: Unexpected file format in {filename}.\n")
+                    return None
+        else:
+            self.text_display.AppendText(f"Error: File {file_path} does not exist.\n")
+            return None
+        
+    def OnSelectFile(self, evt, filetype):
+        if filetype == "dat":
+            wildcard = "dat files (*.dat)|*.dat"
+            with wx.FileDialog(self, "Choose input file", wildcard=wildcard, style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as dlg:
+                if dlg.ShowModal() == wx.ID_OK:
+                    self.infile_display.SetValue(dlg.GetPath())
+        else:
+            wx.MessageBox("Unsupported file type.", "Error", wx.OK | wx.ICON_ERROR)
+            return
+    
+    def OnSelectDir(self, evt):
+        print("Getting chip ID...")  # Debug print
+        chipID = str(self.get_chipID())
+        print(f"Obtained chip ID: {chipID}")  # Debug print
+        expected_bundle_dir_name = chipID + "_v3.0"
+    
+        with wx.DirDialog(self, "Choose bundle directory", style=wx.DD_DEFAULT_STYLE) as dlg:
+            if dlg.ShowModal() == wx.ID_OK:
+                selected_dir_path = dlg.GetPath()
+                selected_dir_name = os.path.basename(selected_dir_path)
+            
+                if selected_dir_name == expected_bundle_dir_name:
+                    self.dir_display.SetValue(selected_dir_path)
+                    self.text_display.AppendText(f"ChipID matches \n")
+                # Check if key files already exist
+                auto_keys_path = os.path.join(selected_dir_path, "auto_keys.txt")
+                pbs_keys_path = os.path.join(selected_dir_path, "PBS_keys.txt")
+                
+                if os.path.exists(auto_keys_path) and os.path.exists(pbs_keys_path):
+                    self.text_display.AppendText("Key files exist\n")
+                    return
+
+                # Get transport key and extract if files don't exist
+                self.transport_key_value = self.TransKeyValue(selected_dir_path, chipID)
+                if not self.transport_key_value:
+                    return
+
+                # Extract archive
+                archive_path = os.path.join(selected_dir_path, chipID + "_keys.7z")
+                if not os.path.exists(archive_path):
+                    wx.MessageBox(f"Archive file not found: {archive_path}", "Error", wx.OK | wx.ICON_ERROR)
+                    return
+
+                command_output = subprocess.run(
+                    ["7z", "x", archive_path, f"-o{selected_dir_path}", f"-p{self.transport_key_value}"],
+                    capture_output=True,
+                    text=True
+                )
+
+                if command_output.returncode == 0:
+                    self.text_display.AppendText(f"Auto&PBS keys extracted successfully\n")
+                else:
+                    self.text_display.AppendText(f"Error extracting archive: {command_output.stderr}\n")
+            else:
+                wx.MessageBox(f"Selected directory does not match the expected bundle directory name: {expected_bundle_dir_name}", 
+                            "Error", wx.OK | wx.ICON_ERROR)                    
+
+    def TransKeyValue(self, bundle_dir_path, chipID):
+        keys_file_name = chipID + "_keys.txt"
+        keys_file_path = os.path.join(bundle_dir_path, keys_file_name)
+        try:
+            with open(keys_file_path, 'r') as keys_file:
+                for line in keys_file:
+                    if "Transport key value" in line:
+                        return line.split(":")[1].strip()
+                else:
+                    raise ValueError("Transport key value not found in keys file.")
+        except FileNotFoundError:
+            wx.MessageBox(f"ERROR: Keys file was not found!\nExpected Path Location: {keys_file_path}", "Error", wx.OK | wx.ICON_ERROR)
+            return None
+    
+    def get_chipID(self):
+        # Execute CLI command
+        result = subprocess.run([config.EXEPATH + "/bin/trustm_chipinfo"], 
+                              capture_output=True, 
+                              text=True)
+    
+        # Parse the output
+        output = result.stdout
+    
+        # Extract values using regex
+        batch_match = re.search(r'Batch Number.*?: ((?:0x[0-9a-fA-F]{2}\s*){6})', output)
+        x_coord_match = re.search(r'X-coordinate.*?: 0x([0-9a-fA-F]{4})', output)
+        y_coord_match = re.search(r'Y-coordinate.*?: 0x([0-9a-fA-F]{4})', output)
+    
+        if not all([batch_match, x_coord_match, y_coord_match]):
+            raise ValueError("Could not extract all required values from CLI output")
+    
+        # Process batch number
+        batch_hex = batch_match.group(1).replace('0x', '').replace(' ', '')
+        batch_hex = batch_hex.strip()
+        # Get coordinates
+        x_coord = x_coord_match.group(1)
+        y_coord = y_coord_match.group(1)
+
+        return f"{batch_hex}{x_coord}{y_coord}".upper()
+            
+    def OnFlush(self, evt):
+        self.text_display.Clear()
+
+    def OnBack(self, evt):
+        self.Parent.Parent.OnCloseWindow(None)
 
 class Tab1Frame(wx.Frame):
     
@@ -2781,14 +3096,16 @@ class Tab1Frame(wx.Frame):
         self.tab2_key = Tab_KEY(self.tab_base)
         self.tab3_app = Tab_APP(self.tab_base)
         self.tab4_meta = Tab_META(self.tab_base)
-        self.tab5_prov = Tab_PROV(self.tab_base)        
+        self.tab5_prov = Tab_PROV(self.tab_base)
+        self.tab6_test = Tab_TEST(self.tab_base)        
 
         # Add tabs
         self.tab_base.AddPage(self.tab1_gen, 'General')
         self.tab_base.AddPage(self.tab2_key, 'Private Key and Cert OID')        
         self.tab_base.AddPage(self.tab3_app, 'Application Data OID')
         self.tab_base.AddPage(self.tab4_meta, 'Write Metadata')
-        self.tab_base.AddPage(self.tab5_prov, 'Matter DAC Provisioning')        
+        self.tab_base.AddPage(self.tab5_prov, 'Matter DAC Provisioning')    
+        self.tab_base.AddPage(self.tab6_test, "Testing")    
 
         self.Show(True)
               
