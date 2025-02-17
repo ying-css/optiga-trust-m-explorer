@@ -10,6 +10,7 @@ import subprocess
 import xml.dom.minidom
 import math
 import re
+import time
 
 class Tab_GEN(wx.Panel):
     
@@ -2789,7 +2790,6 @@ class Tab_MTRPROV(wx.Panel):
         gdsizer2 = wx.BoxSizer(wx.HORIZONTAL)
         gdsizer3 = wx.BoxSizer(wx.HORIZONTAL)
         gdsizer4 = wx.GridSizer(rows=1, cols=2, vgap=5, hgap=10)
-        gdsizer5 = wx.BoxSizer(wx.HORIZONTAL)
         gdsizer6 = wx.BoxSizer(wx.HORIZONTAL)
         gdsizer7 = wx.BoxSizer(wx.HORIZONTAL)
         gdsizer8 = wx.BoxSizer(wx.HORIZONTAL)
@@ -2817,15 +2817,10 @@ class Tab_MTRPROV(wx.Panel):
         button_AutoValue.SetFont(buttonfont)
         button_PBSValue = wx.Button(self, 2, 'Read PBS Value', size=wx.Size(200, 38))
         button_PBSValue.SetFont(buttonfont)
-        #gdsizer5
-        select_cdpem_button = wx.Button(self, -1, 'Read CD pem', size=wx.Size(150, 38))
-        select_cdpem_button.SetFont(buttonfont)
-        self.cdpem_display = wx.TextCtrl(self, -1, value= "to select .pem file", style=wx.TE_READONLY)
-        self.cdpem_display.SetFont(textctrlfont)
         #gdsizer6
-        select_cdbin_button = wx.Button(self, -1, 'Write CD bin(F1E0)', size=wx.Size(150, 38))
+        select_cdbin_button = wx.Button(self, -1, 'Write CD(F1E0)', size=wx.Size(150, 38))
         select_cdbin_button.SetFont(buttonfont)
-        self.cdbin_display = wx.TextCtrl(self, -1, value= "to select .bin file", style=wx.TE_READONLY)
+        self.cdbin_display = wx.TextCtrl(self, -1, value= "to select .bin or .der file", style=wx.TE_READONLY)
         self.cdbin_display.SetFont(textctrlfont)
         #gdsizer7
         select_DAC_button = wx.Button(self, -1, 'DAC(E0E0)', size=wx.Size(150, 38))
@@ -2859,9 +2854,6 @@ class Tab_MTRPROV(wx.Panel):
 
         gdsizer4.Add(button_AutoValue, 0, wx.LEFT|wx.EXPAND, 8)
         gdsizer4.Add(button_PBSValue, 0, wx.RIGHT|wx.EXPAND, 8)
-        
-        gdsizer5.Add(select_cdpem_button, 3, wx.LEFT|wx.RIGHT|wx.EXPAND, 8)
-        gdsizer5.Add(self.cdpem_display, 5, wx.LEFT|wx.RIGHT|wx.EXPAND, 8)
 
         gdsizer6.Add(select_cdbin_button, 3, wx.LEFT|wx.RIGHT|wx.EXPAND, 8)
         gdsizer6.Add(self.cdbin_display, 5, wx.LEFT|wx.RIGHT|wx.EXPAND, 8)
@@ -2884,7 +2876,6 @@ class Tab_MTRPROV(wx.Panel):
         midsizer.Add(gdsizer2, 0, wx.EXPAND|wx.ALL, 4)
         midsizer.Add(gdsizer3, 0, wx.EXPAND|wx.ALL, 4)
         midsizer.Add(gdsizer4, 0, wx.EXPAND|wx.ALL, 4)
-        midsizer.Add(gdsizer5, 0, wx.EXPAND|wx.ALL, 4)
         midsizer.AddSpacer(20)
         midsizer.Add(gdsizer6, 0, wx.EXPAND|wx.ALL, 4)
         midsizer.Add(gdsizer7, 0, wx.EXPAND|wx.ALL, 4)
@@ -2905,9 +2896,7 @@ class Tab_MTRPROV(wx.Panel):
         select_key_button.Bind(wx.EVT_BUTTON, self.OnSelectKeyFile)
         button_AutoValue.Bind(wx.EVT_BUTTON, self.AutoValue)
         button_PBSValue.Bind(wx.EVT_BUTTON, self.PBSValue)
-        self.cdpem_display.Bind(wx.EVT_LEFT_DOWN,self.OnClickCdPEM)
-        select_cdpem_button.Bind(wx.EVT_LEFT_DOWN,self.OnReadCdPEM)
-        self.cdbin_display.Bind(wx.EVT_LEFT_DOWN,self.OnClickCdBIN)
+        self.cdbin_display.Bind(wx.EVT_LEFT_DOWN,self.OnClickCD)
         select_cdbin_button.Bind(wx.EVT_LEFT_DOWN,self.OnWriteCD)
         select_DAC_button.Bind(wx.EVT_LEFT_DOWN,self.OnWriteDac)
         select_PAI_button.Bind(wx.EVT_LEFT_DOWN,self.OnWritePai)
@@ -2959,39 +2948,6 @@ class Tab_MTRPROV(wx.Panel):
         self.PBSValue = self.get_key_value("pbs")
         if self.PBSValue:
             self.text_display.AppendText(f"\nPBS Value: {self.PBSValue}\n")
-            
-    def OnWriteOID(self, evt):
-        oid = self.OID_input.GetValue().strip()
-        pbs = self.extract_value_from_file("PBS_keys.txt")
-        autovalue = self.extract_value_from_file("auto_keys.txt")
-        invalue = self.invalue_input.GetValue().strip()
-        infile = self.infile_display.GetValue()
-
-        if not oid or not pbs or not autovalue:
-            wx.MessageBox("OID, PBS, and Auto Value must not be empty.", "Error", wx.OK | wx.ICON_ERROR)
-            return
-
-        if invalue and infile:
-            wx.MessageBox("Only one of Input Value or Input File Name should be provided.", "Error", wx.OK | wx.ICON_ERROR)
-            return
-
-        command = ""
-        if invalue:
-            command = f"/home/css/optiga-trust-m-explorer/Python_TrustM_GUI/linux-optiga-trust-m/bin/trustm_update_with_PBS_Auto -w {oid} -P {pbs} -A {autovalue} -I {invalue}"
-        elif infile:
-            command = f"/home/css/optiga-trust-m-explorer/Python_TrustM_GUI/linux-optiga-trust-m/bin/trustm_update_with_PBS_Auto -w {oid} -P {pbs} -A {autovalue} -i {infile}"
-        else:
-            wx.MessageBox("Either Input Value or Input File Name must be provided.", "Error", wx.OK | wx.ICON_ERROR)
-            return
-
-        self.text_display.AppendText(f"Executing command: {command}\n")
-        try:
-            command_output = subprocess.run(command, shell=True, capture_output=True, text=True)
-            self.text_display.AppendText(command_output.stdout)
-            if command_output.stderr:
-                self.text_display.AppendText(command_output.stderr)
-        except Exception as e:
-            self.text_display.AppendText(f"Error executing command: {e}\n")
         
     def extract_value_from_file(self, filename):
         chipID = str(self.get_chipID())
@@ -3004,16 +2960,6 @@ class Tab_MTRPROV(wx.Panel):
         
         self.text_display.AppendText(f"Error: Chip ID {chipID} not found in {filename}.\n")
         return None
-        
-    def OnSelectFile(self, evt, filetype):
-        if filetype == "dat":
-            wildcard = "dat files (*.dat)|*.dat"
-            with wx.FileDialog(self, "Choose input file", wildcard=wildcard, style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as dlg:
-                if dlg.ShowModal() == wx.ID_OK:
-                    self.infile_display.SetValue(dlg.GetPath())
-        else:
-            wx.MessageBox("Unsupported file type.", "Error", wx.OK | wx.ICON_ERROR)
-            return
     
     def OnSelectBundle(self, evt):
         chipID = str(self.get_chipID())
@@ -3114,62 +3060,37 @@ class Tab_MTRPROV(wx.Panel):
         else:
             self.text_display.AppendText(f"Error extracting keys archive: \n{command_output.stderr}\n")
             return
-
-    def OnClickCdPEM(self, evt):
-        with wx.FileDialog(self, "Choose .pem file", 
-                          wildcard=".pem files (*.pem)|*.pem",
-                          style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as dlg:
-            if dlg.ShowModal() != wx.ID_OK:
-                return
-                
-            self.pem_path = dlg.GetPath()
-            pem_filename = os.path.basename(self.pem_path)
-            self.cdpem_display.SetValue(pem_filename)
-            
-    def OnReadCdPEM(self, evt):
-        if self.cdpem_display.GetValue()=="to select .pem file":
-            wx.MessageBox("No .pem file selected. Please select a file first.", "Error", wx.OK | wx.ICON_ERROR)
-            return
-        command_output = exec_cmd.execCLI(["openssl", "x509", "-in", self.pem_path, "-text", "-noout"])
-        if not command_output:  # Handle empty or error case
-            wx.MessageBox("Failed to read the .pem file. Check if it's valid.", "Error", wx.OK | wx.ICON_ERROR)
-            return
-            
-        # Convert bytes to string if needed
-        if isinstance(command_output, bytes):
-            command_output = command_output.decode('utf-8')
-        message = "\nCD .pem content:\n" + command_output + "\n"
-        self.text_display.AppendText(message)
         
-    def OnClickCdBIN(self, evt):
-        with wx.FileDialog(self, "Choose .bin file", 
-                          wildcard=".bin files (*.bin)|*.bin",
+    def OnClickCD(self, evt):
+        with wx.FileDialog(self, "Choose .bin pr .der file", 
+                          wildcard=".bin and .der files (*.bin;*.der)|*.bin;*.der",
                           style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as dlg:
             if dlg.ShowModal() != wx.ID_OK:
                 return
                 
-            self.bin_path = dlg.GetPath()
-            bin_filename = os.path.basename(self.bin_path)
-            self.cdbin_display.SetValue(bin_filename)
+            self.cd_path = dlg.GetPath()
+            cd_filename = os.path.basename(self.cd_path)
+            self.cdbin_display.SetValue(cd_filename)
             
     def OnWriteCD(self, evt):
-        if self.cdbin_display.GetValue()=="to select .bin file":
-            wx.MessageBox("No .bin file selected. Please select a file first.", "Error", wx.OK | wx.ICON_ERROR)
+        if self.cdbin_display.GetValue()=="to select .bin or .der file":
+            wx.MessageBox("No file selected. Please select a file first.", "Error", wx.OK | wx.ICON_ERROR)
             return
         self.text_display.AppendText("\nWrite CD into 0xf1e0\n")
-        command_output = exec_cmd.execCLI([config.EXEPATH + "/bin/trustm_data", "-e", "-w", "0xf1e0", "-i", self.bin_path, "-X"])
+        command_output = exec_cmd.execCLI([config.EXEPATH + "/bin/trustm_data", "-e", "-w", "0xf1e0", "-i", self.cd_path, "-X"])
         if not command_output:  # Handle empty or error case
-            wx.MessageBox("Failed to read the .pem file. Check if it's valid.", "Error", wx.OK | wx.ICON_ERROR)
+            wx.MessageBox("Failed to read the file. Check if it's valid.", "Error", wx.OK | wx.ICON_ERROR)
             return
         self.text_display.AppendText(command_output)
         
         # Read original binary for comparison
         try:
-            with open(self.bin_path, 'rb') as f:
-                original_binary = f.read()
-                self.OnVerifyCD(original_binary)
+            with open(self.cd_path, 'rb') as f:
+                cert2_data = f.read()
+                self.OnVerifyCD(cert2_data)
         except Exception as e:
             self.text_display.AppendText(f"\nError reading binary file: {str(e)}\n")
+
     
     def get_chipID(self):
         # Execute CLI command
@@ -3318,8 +3239,6 @@ class Tab_MTRPROV(wx.Panel):
 
         # Write DAC certificate to 0xe0e0
         command_output = exec_cmd.execCLI([
-            #config.EXEPATH + "/bin/trustm_cert",
-            #"-w", "0xe0e0", "-c", dac_pem_path, "-X"
             config.EXEPATH + "/bin/trustm_update_with_PBS_Auto",
             "-w", "0xe0e0",
             "-P", str(pbs_value),
@@ -3460,33 +3379,38 @@ class Tab_MTRPROV(wx.Panel):
             self.write_state = 0  # Reset state
             self.text_display.AppendText("\n=== Write All Operation Completed Successfully and Verification Passes===\n")
             
-            
-    #def OnVerifyCD(self):
-            
     def OnVerifyCD(self, cert2_data):
         """Verify CD certificate by comparing with read certificate"""
+        current_dir = os.getcwd()
+        parent_dir = os.path.dirname(current_dir)
+        matter_cd_path = os.path.join(parent_dir, "linux-optiga-trust-m", "matter_cd.bin")
+ 
         # Read current CD binary
-        exec_cmd.execCLI([
+        read_output = exec_cmd.execCLI([
             config.EXEPATH + "/bin/trustm_data", 
             "-r", "0xf1e0", 
-            "-o", "mater_cd.bin"
+            "-o", matter_cd_path
         ])
         
         # Compare binary files directly
-        with open(config.EXEPATH + "/mater_cd.bin", 'rb') as f1:
+        with open(config.EXEPATH + "/matter_cd.bin", 'rb') as f1:
             cert1_data = f1.read()
             
         if cert1_data == cert2_data:
-            self.text_display.AppendText("\nCD binaries match!\n")
+            self.text_display.AppendText("\nRead back CD and verify success!\n")
             return True
         else:
-            self.text_display.AppendText("\nCD binaries do not match!\n")
+            self.text_display.AppendText("\nRead back CD and verification fails!\n")
             return False
 
     def OnVerifyPAI(self, cert2_output):
         """Verify PAI certificate by comparing with read certificate"""
-        exec_cmd.execCLI([config.EXEPATH + "/bin/trustm_cert", "-r", "0xe0e8", "-o", "mater_pai.pem"])
-        cert1_output = exec_cmd.execCLI(["openssl", "x509", "-in", config.EXEPATH + "/mater_pai.pem", "-text", "-noout"])
+        current_dir = os.getcwd()
+        parent_dir = os.path.dirname(current_dir)
+        matter_pai_path = os.path.join(parent_dir, "linux-optiga-trust-m", "matter_pai.pem")
+        
+        exec_cmd.execCLI([config.EXEPATH + "/bin/trustm_cert", "-r", "0xe0e8", "-o", matter_pai_path])
+        cert1_output = exec_cmd.execCLI(["openssl", "x509", "-in", matter_pai_path, "-text", "-noout"])
         if isinstance(cert1_output, bytes):
             cert1_output = cert1_output.decode('utf-8')
             
@@ -3500,10 +3424,10 @@ class Tab_MTRPROV(wx.Panel):
         
         # Compare certificates
         if cert1_lines == cert2_lines:
-            self.text_display.AppendText("\nPAI certificate matches!\n")
+            self.text_display.AppendText("\nRead back PAI and verify success!\n")
             return True
         else:
-            self.text_display.AppendText("\nPAI certificate does not match!\n")
+            self.text_display.AppendText("\nRead back PAI and verification fails!\n")
             # Show differences
             for i, (line1, line2) in enumerate(zip(cert1_lines, cert2_lines)):
                 if line1 != line2:
@@ -3513,8 +3437,12 @@ class Tab_MTRPROV(wx.Panel):
             return False
             
     def OnVerifyDAC(self, cert2_output):
-        exec_cmd.execCLI([config.EXEPATH + "/bin/trustm_cert", "-r", "0xe0e0", "-o", "mater_dac.pem"])
-        cert1_output = exec_cmd.execCLI(["openssl", "x509", "-in", config.EXEPATH + "/mater_dac.pem", "-text", "-noout"])
+        current_dir = os.getcwd()
+        parent_dir = os.path.dirname(current_dir)
+        matter_dac_path = os.path.join(parent_dir, "linux-optiga-trust-m", "matter_dac.pem")
+ 
+        exec_cmd.execCLI([config.EXEPATH + "/bin/trustm_cert", "-r", "0xe0e0", "-o", matter_dac_path])
+        cert1_output = exec_cmd.execCLI(["openssl", "x509", "-in", matter_dac_path, "-text", "-noout"])
         if isinstance(cert1_output, bytes):
                 cert1_output = cert1_output.decode('utf-8')
             
@@ -3528,10 +3456,10 @@ class Tab_MTRPROV(wx.Panel):
         
         # Compare certificates
         if cert1_lines == cert2_lines:
-            self.text_display.AppendText("\nDAC certificate matches!\n")
+            self.text_display.AppendText("\nRead back DAC and verify success!\n")
             return True
         else:
-            self.text_display.AppendText("\nDAC certificates does not match!\n")
+            self.text_display.AppendText("\nRead back DAC and verification fails!\n")
             # Optional: Show differences
             for i, (line1, line2) in enumerate(zip(cert1_lines, cert2_lines)):
                 if line1 != line2:
@@ -3539,8 +3467,6 @@ class Tab_MTRPROV(wx.Panel):
                     self.text_display.AppendText(f"\nCert1: {line1}")
                     self.text_display.AppendText(f"\nCert2: {line2}\n")
             return False
-            
-    #def OnVerifyPAI(self):
             
     def OnFlush(self, evt):
         self.text_display.Clear()
