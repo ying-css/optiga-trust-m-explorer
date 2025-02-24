@@ -28,6 +28,7 @@ This document is intended for the users who wish to explore the functionalities 
 
 - [2.4 Write Metadata](#write-metadata)
 - [2.5 Matter Test DAC Provisioning](#matter-test-dac-provisioning)
+- [2.6 MTR Matter Provisioning](#mtr-matter-provisioning)
 
 
 [3. Cryptographic Functions](#cryptographic-functions)
@@ -450,7 +451,7 @@ To extract the public key from the certificate, select "Extract Public Key From 
 ![](images/General_Features/matter_dac_provisioning/extract_pubkey.png)
 [^Figure 32]: Displays the public key extracted from the certificate
 
-## Generate DAC CSR
+### Generate DAC CSR
 Generates a Certificate Signing Request(CSR) using the public key.
 
 To generate the CSR, select "Generate DAC CSR Using Public Key".
@@ -475,13 +476,68 @@ To write the new DAC certificate into 0xE0E0, select "Write Test DAC".
 Writes the Matter Test PAI certificate to OID 0xE0E8.
 To write the Matter Test PAI into 0xE0E8, select "Write Matter Test PAI".
 ![](images/General_Features/matter_dac_provisioning/write_pai.png)
+
 [^Figure 36]: Matter Test PAI written to 0xE0E8.
 
 ### Write Test CD
 Writes the Test CD to OID 0xF1E0.
 To write Test CD into 0xF1E0, select "Write Test CD".
 ![](images/General_Features/matter_dac_provisioning/write_cd.png)
+
 [^Figure 37]: Test CD written to 0xF1E0.
+
+## MTR Matter Provisioning
+This section shows you the Matter Provisioning for MTR specifically using the OPTIGA™ Trust M for Device Attestation. It starts by reading the corresponding auto value and PBS value based on chip ID. With the auto value and PBS value, it helps to write CD, DAC and PAI to the secure element. User can also choose to set it to operational mode.
+
+![](images/General_Features/mtr_matter_provisioning/mtr_functions.png)
+
+[^Figure xx]: MTR Matter Provisioning functions described
+
+### Read Auto and PBS Value
+
+The corresponding Auto value and PBS value are retrieved from the bundle file based on the unique device Chip ID.
+
+To read them, first select the distributed bundle file from local storage. Then, provide the transport key either by uploading a `.txt` file containing the key or entering it manually. Select "Read Auto Value" and "Read PBS Value" to print them out.
+
+![](images/General_Features/mtr_matter_provisioning/read_auto_pbs.png)
+
+[^Figure xx]: Displays the corresponding auto and PBS value
+
+### Write CD
+
+Writes the CD to OID 0xF1E0. Select a CD cert which should be either in .bin or .der format. Select "Write CD(F1E0)" to print the writing result. "Write success" and "Read back CD and verify success" will be printed when CD is written successfully.
+
+![](images/General_Features/mtr_matter_provisioning/write_cd.png)
+
+[^Figure xx]: Displays information of the new CD and writing result.
+
+### Write DAC
+
+Writes the DAC to OID 0xE0E0. By selecting "DAC(E0E0)", GUI will start to search the DAC .pem file inside the bundle file. If it exists, checkbox "DAC found in bundle file" will be enabled automatically. "Write success" and "Read back DAC and verify success" will be printed when DAC is written successfully.
+
+![](images/General_Features/mtr_matter_provisioning/write_dac.png)
+
+[^Figure xx]: Displays information of the new DAC and writing result.
+
+### Write PAI
+
+Writes the PAI to OID 0xE0E8. By selecting "PAI(E0E8)", GUI will start to search the PAI .pem file inside the bundle file. If it exists, checkbox "PAI found in bundle file" will be enabled automatically. "Write success" and "Read back PAI and verify success" will be printed when PAI is written successfully.
+
+![](images/General_Features/mtr_matter_provisioning/write_pai.png)
+
+[^Figure xx]: Displays information of the new PAI and writing result.
+
+### Write All
+
+Writes CD, DAC and PAI to corresponding OIDs in one time. Select "Write All" to write them  in order. "Write All Operation Completed Successfully and Verification Passes" will be printed when all writings are finished successfully.
+
+![](images/General_Features/mtr_matter_provisioning/write-all.png)
+
+### Operational Mode
+
+Check the box "Set to operational (irreversible)" to set OID 0xF1E0,0xE0E0 and 0xE0E8 to operational **which is irreversible**. The OID change condition will be set to conf:E140.
+
+"Figure to be added after testing the operational mode"
 
 # Cryptographic Functions
 
