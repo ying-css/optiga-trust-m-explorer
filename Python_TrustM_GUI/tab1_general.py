@@ -2894,8 +2894,8 @@ class Tab_MTRPROV(wx.Panel):
         # Bind events
         select_bundle_button.Bind(wx.EVT_BUTTON, self.OnSelectBundle)
         select_key_button.Bind(wx.EVT_BUTTON, self.OnSelectKeyFile)
-        button_AutoValue.Bind(wx.EVT_BUTTON, self.AutoValue)
-        button_PBSValue.Bind(wx.EVT_BUTTON, self.PBSValue)
+        button_AutoValue.Bind(wx.EVT_BUTTON, self.OnPrintAuto)
+        button_PBSValue.Bind(wx.EVT_BUTTON, self.OnPrintPBS)
         self.cdbin_display.Bind(wx.EVT_LEFT_DOWN,self.OnClickCD)
         select_cdbin_button.Bind(wx.EVT_LEFT_DOWN,self.OnWriteCD)
         select_DAC_button.Bind(wx.EVT_LEFT_DOWN,self.OnWriteDac)
@@ -2912,7 +2912,7 @@ class Tab_MTRPROV(wx.Panel):
         self.SetSizer(mainsizer)
         mainsizer.Fit(self)
         
-    def get_key_value(self, key_type):
+    def OnKeyValue(self, key_type):
         #key_type (str): 'auto' or 'pbs'
         zipped_bundle = self.bundle_display.GetValue().strip()
         if not zipped_bundle:
@@ -2935,22 +2935,22 @@ class Tab_MTRPROV(wx.Panel):
         keys_path = os.path.join(extracted_bundle, filename)
         
         if not os.path.exists(keys_path):
-            self.ExtractKeysIfNeeded(extracted_bundle)
+            self.OnExtractKeys(extracted_bundle)
 
-        return self.extract_value_from_file(keys_path)
+        return self.OnExtractChipSpecificKey(keys_path)
                 
-    def AutoValue(self, evt):
-        self.AutoValue = self.get_key_value("auto")
+    def OnPrintAuto(self, evt):
+        self.AutoValue = self.OnKeyValue("auto")
         if self.AutoValue:
             self.text_display.AppendText(f"\nAuto Value: {self.AutoValue}\n")
             
-    def PBSValue(self, evt):
-        self.PBSValue = self.get_key_value("pbs")
+    def OnPrintPBS(self, evt):
+        self.PBSValue = self.OnKeyValue("pbs")
         if self.PBSValue:
             self.text_display.AppendText(f"\nPBS Value: {self.PBSValue}\n")
         
-    def extract_value_from_file(self, filename):
-        chipID = str(self.get_chipID())
+    def OnExtractChipSpecificKey(self, filename):
+        chipID = str(self.OnChipID())
         
         with open(filename, 'r') as f:
             for line in f:
@@ -2960,9 +2960,20 @@ class Tab_MTRPROV(wx.Panel):
         
         self.text_display.AppendText(f"Error: Chip ID {chipID} not found in {filename}.\n")
         return None
+
+    def OnUpdatePBS(self,pbs_value):
+        """Write PBS value to pbsfile.txt"""
+        try:
+            pbs_file_path = os.path.join(config.EXEPATH, "pbsfile.txt")
+            with open(pbs_file_path, 'w') as f:
+                f.write(pbs_value)
+            return True
+        except Exception as e:
+            self.text_display.AppendText(f"\nError updating PBS to file: {str(e)}\n")
+            return False
     
     def OnSelectBundle(self, evt):
-        chipID = str(self.get_chipID())
+        chipID = str(self.OnChipID())
         
         with wx.FileDialog(self, "Choose bundle file", 
                           wildcard="7z files (*.7z)|*.7z",
@@ -3014,12 +3025,12 @@ class Tab_MTRPROV(wx.Panel):
             
             # Extract transport key value
             try:
-                transport_key = self.TransKeyValue(key_file_path)
+                transport_key = self.OnTransKey(key_file_path)
                 self.transvalue_display.SetValue(transport_key)
             except Exception as e:
                 wx.MessageBox(f"Error: {e}", "Error", wx.ICON_ERROR)
 
-    def TransKeyValue(self, key_file_path):
+    def OnTransKey(self, key_file_path):
         try:
             with open(key_file_path, 'r') as keys_file:
                 for line in keys_file:
@@ -3032,7 +3043,7 @@ class Tab_MTRPROV(wx.Panel):
         except Exception as e:
             raise RuntimeError(f"Error reading transport key: {e}")
             
-    def ExtractKeysIfNeeded(self, extracted_bundle):
+    def OnExtractKeys(self, extracted_bundle):
         # Ensure the bundle file is extracted before proceeding
         if not os.path.exists(extracted_bundle):
             wx.MessageBox(f"Bundle file is not correctly extracted: {extracted_bundle}", "Error", wx.OK | wx.ICON_ERROR)
@@ -3076,6 +3087,14 @@ class Tab_MTRPROV(wx.Panel):
         if self.cdbin_display.GetValue()=="to select .bin or .der file":
             wx.MessageBox("No file selected. Please select a file first.", "Error", wx.OK | wx.ICON_ERROR)
             return
+            
+        pbs_value = self.OnKeyValue("pbs")
+        if not pbs_value:
+                self.text_display.AppendText("\nError: Could not get PBS values\n")
+                return
+        if not self.OnUpdatePBS(pbs_value):
+                return
+                        
         self.text_display.AppendText("\nWrite CD into 0xf1e0\n")
         command_output = exec_cmd.execCLI([config.EXEPATH + "/bin/trustm_data", "-e", "-w", "0xf1e0", "-i", self.cd_path, "-X"])
         if not command_output:  # Handle empty or error case
@@ -3092,7 +3111,7 @@ class Tab_MTRPROV(wx.Panel):
             self.text_display.AppendText(f"\nError reading binary file: {str(e)}\n")
 
     
-    def get_chipID(self):
+    def OnChipID(self):
         # Execute CLI command
         result = subprocess.run([config.EXEPATH + "/bin/trustm_chipinfo"], 
                               capture_output=True, 
@@ -3118,17 +3137,17 @@ class Tab_MTRPROV(wx.Panel):
 
         return f"{batch_hex}{x_coord}{y_coord}".upper()
         
-    def enable_checkbox(self, key_type):
+    def OnCheckbox(self, key_type):
         #Enables the corresponding checkbox if the .pem file is found or extracted.
         if key_type == "DAC":
             self.DACcheckbox.SetValue(True)
         elif key_type == "PAI":
             self.PAIcheckbox.SetValue(True)
         
-    def extract_pem(self, key_type):
+    def OnExtractPem(self, key_type):
         #Extracts only the specific ChipID_keyOID=E0F0_{key_type}.pem file from the archive.
         #:param key_type: The key type to extract ("DAC" or "PAI").
-        chip_id = str(self.get_chipID())
+        chip_id = str(self.OnChipID())
         basename_bundle = self.bundle_display.GetValue().strip()
         extracted_bundle = os.path.splitext(basename_bundle)[0]
 
@@ -3157,9 +3176,9 @@ class Tab_MTRPROV(wx.Panel):
         # Check if the .pem file already exists to avoid re-extraction
         if os.path.exists(target_pem_path):
                 if key_type=="DACs":
-                        self.enable_checkbox("DAC")
+                        self.OnCheckbox("DAC")
                 if key_type=="PAI":
-                        self.enable_checkbox("PAI")
+                        self.OnCheckbox("PAI")
                 return
 
         # Step 1: List archive contents to check if target file exists
@@ -3202,20 +3221,17 @@ class Tab_MTRPROV(wx.Panel):
             if extract_command is not None and "Error" not in extract_command:
                 self.text_display.AppendText(f"Successfully extracted {target_pem_filename} to: {extracted_bundle}\n")
                 if key_type=="DACs":
-                        self.enable_checkbox("DAC")
+                        self.OnCheckbox("DAC")
                 if key_type=="PAI":
-                        self.enable_checkbox("PAI")
+                        self.OnCheckbox("PAI")
             else:
                 self.text_display.AppendText(f"Error extracting {target_pem_filename}: {extract_command}\n")
 
         except Exception as e:
             self.text_display.AppendText(f"Error extracting .pem file: {str(e)}\n")
 
-
-
-        
     def OnWriteDac(self, evt):
-        self.extract_pem("DACs")
+        self.OnExtractPem("DACs")
         self.text_display.AppendText("\nWrite DAC into 0xe0e0\n")
         wx.CallLater(10, self.OnWriteDac1)
         
@@ -3223,14 +3239,19 @@ class Tab_MTRPROV(wx.Panel):
         # Use the dynamically extracted DAC file path
         basename_bundle = self.bundle_display.GetValue().strip()
         extracted_bundle = os.path.splitext(basename_bundle)[0]
-        chip_id = str(self.get_chipID())
+        chip_id = str(self.OnChipID())
         dac_pem_filename = f"{chip_id}_keyOID=E0F0_DAC.pem"
         dac_pem_path = os.path.join(extracted_bundle, dac_pem_filename)
         
-        auto_value = self.get_key_value("auto")
-        pbs_value = self.get_key_value("pbs")
-        if not auto_value or not pbs_value:
+        auto_value = self.OnKeyValue("auto")
+        if not auto_value:
                 self.text_display.AppendText("\nError: Could not get Auto/PBS values\n")
+                return
+        pbs_value = self.OnKeyValue("pbs")
+        if not pbs_value:
+                self.text_display.AppendText("\nError: Could not get Auto/PBS values\n")
+                return
+        if not self.OnUpdatePBS(pbs_value):
                 return
 
         if not os.path.exists(dac_pem_path):
@@ -3253,7 +3274,6 @@ class Tab_MTRPROV(wx.Panel):
         if command_output is None or "Error" in command_output:
             self.text_display.AppendText(f"\nError executing trustm_cert: {command_output}\n")
             return
-
         self.text_display.AppendText(command_output) 
 
         # Display extracted DAC certificate
@@ -3267,7 +3287,7 @@ class Tab_MTRPROV(wx.Panel):
         self.OnVerifyDAC(command2_output)
     
     def OnWritePai(self, evt):
-        self.extract_pem("PAI")  # Extract PAI PEM file
+        self.OnExtractPem("PAI")  # Extract PAI PEM file
         self.text_display.AppendText("\nWrite PAI into 0xe0e8\n")
         wx.CallLater(10, self.OnWritePai1)
 
@@ -3275,21 +3295,27 @@ class Tab_MTRPROV(wx.Panel):
         # Use the dynamically extracted PAI file path
         basename_bundle = self.bundle_display.GetValue().strip()
         extracted_bundle = os.path.splitext(basename_bundle)[0]
-        chip_id = str(self.get_chipID())
+        chip_id = str(self.OnChipID())
         
         #pai_pem_filename = f"{chip_id}_keyOID=E0F0_PAI.pem"
         pai_pem_filename = f"keyOID=E0F0_PAI.pem"
         pai_pem_path = os.path.join(extracted_bundle, pai_pem_filename)
         
-        auto_value = self.get_key_value("auto")
-        pbs_value = self.get_key_value("pbs")
-        if not auto_value or not pbs_value:
+        auto_value = self.OnKeyValue("auto")
+        if not auto_value:
+                self.text_display.AppendText("\nError: Could not get Auto/PBS values\n")
+                return
+        pbs_value = self.OnKeyValue("pbs")
+        if not pbs_value:
                 self.text_display.AppendText("\nError: Could not get Auto/PBS values\n")
                 return
 
         if not os.path.exists(pai_pem_path):
             self.text_display.AppendText(f"\nError: Extracted PAI PEM file {pai_pem_path} not found!\n")
             return
+            
+        if not self.OnUpdatePBS(pbs_value):
+                return
 
         # Write PAI certificate to 0xe0e8
         command_output = exec_cmd.execCLI([
@@ -3321,10 +3347,8 @@ class Tab_MTRPROV(wx.Panel):
         self.OnVerifyPAI(command2_output)
         
     def OnWriteAll(self, evt):
-        """Write CD binary, DAC and PAI in sequence with error handling"""
         self.write_all_success = True
         
-        # Check if all files are selected before proceeding
         zipped_bundle = self.bundle_display.GetValue().strip()
         if not zipped_bundle:
             wx.MessageBox("Please select a bundle file first.", "Error", wx.OK | wx.ICON_ERROR)
@@ -3340,13 +3364,24 @@ class Tab_MTRPROV(wx.Panel):
                          "Error", wx.OK | wx.ICON_ERROR)
             self.write_all_success = False
             return
+
+        # Get and validate PBS value before starting operations
+        pbs_value = self.OnKeyValue("pbs")
+        if not pbs_value:
+            self.text_display.AppendText("\nError: Could not get PBS value\n")
+            return
+            
+        # Update PBS before starting operations
+        if not self.OnUpdatePBS(pbs_value):
+            self.text_display.AppendText("\nError: Failed to update PBS\n")
+            return
             
         self.text_display.AppendText("\n=== Starting Write All Operation ===\n")
         
         # Reset state and start first operation
         self.write_state = 0
         self.OnWriteTimer(evt)  # Start the sequence immediately
-            
+        
     def OnWriteTimer(self, evt):
         """Handle sequential write operations"""
         self.write_timer.Stop()  # Ensure timer is stopped
