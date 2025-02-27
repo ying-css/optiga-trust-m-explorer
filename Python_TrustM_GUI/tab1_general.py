@@ -2894,8 +2894,10 @@ class Tab_MTRPROV(wx.Panel):
         # Bind events
         select_bundle_button.Bind(wx.EVT_BUTTON, self.OnSelectBundle)
         select_key_button.Bind(wx.EVT_BUTTON, self.OnSelectKeyFile)
+
         button_AutoValue.Bind(wx.EVT_BUTTON, self.OnPrintAuto)
         button_PBSValue.Bind(wx.EVT_BUTTON, self.OnPrintPBS)
+
         self.cdbin_display.Bind(wx.EVT_LEFT_DOWN,self.OnClickCD)
         select_cdbin_button.Bind(wx.EVT_LEFT_DOWN,self.OnWriteCD)
         select_DAC_button.Bind(wx.EVT_LEFT_DOWN,self.OnWriteDac)
@@ -2961,19 +2963,8 @@ class Tab_MTRPROV(wx.Panel):
         self.text_display.AppendText(f"Error: Chip ID {chipID} not found in {filename}.\n")
         return None
 
-    def OnUpdatePBS(self,pbs_value):
-        """Write PBS value to pbsfile.txt"""
-        try:
-            pbs_file_path = os.path.join(config.EXEPATH, "pbsfile.txt")
-            with open(pbs_file_path, 'w') as f:
-                f.write(pbs_value)
-            return True
-        except Exception as e:
-            self.text_display.AppendText(f"\nError updating PBS to file: {str(e)}\n")
-            return False
-    
     def OnSelectBundle(self, evt):
-        chipID = str(self.OnChipID())
+        chipID = str(self.get_chipID())
         
         with wx.FileDialog(self, "Choose bundle file", 
                           wildcard="7z files (*.7z)|*.7z",
@@ -3176,6 +3167,7 @@ class Tab_MTRPROV(wx.Panel):
         # Check if the .pem file already exists to avoid re-extraction
         if os.path.exists(target_pem_path):
                 if key_type=="DACs":
+
                         self.OnCheckbox("DAC")
                 if key_type=="PAI":
                         self.OnCheckbox("PAI")
@@ -3274,7 +3266,6 @@ class Tab_MTRPROV(wx.Panel):
         if command_output is None or "Error" in command_output:
             self.text_display.AppendText(f"\nError executing trustm_cert: {command_output}\n")
             return
-        self.text_display.AppendText(command_output) 
 
         # Display extracted DAC certificate
         command2_output = exec_cmd.execCLI(["openssl", "x509", "-in", dac_pem_path, "-text", "-noout"])
@@ -3381,7 +3372,7 @@ class Tab_MTRPROV(wx.Panel):
         # Reset state and start first operation
         self.write_state = 0
         self.OnWriteTimer(evt)  # Start the sequence immediately
-        
+
     def OnWriteTimer(self, evt):
         """Handle sequential write operations"""
         self.write_timer.Stop()  # Ensure timer is stopped
