@@ -2794,6 +2794,7 @@ class Tab_MTRPROV(wx.Panel):
         gdsizer7 = wx.BoxSizer(wx.HORIZONTAL)
         gdsizer8 = wx.BoxSizer(wx.HORIZONTAL)
         gdsizer9 = wx.BoxSizer(wx.HORIZONTAL)
+        gdlcso = wx.BoxSizer (wx.HORIZONTAL)
 
         self.text_display = wx.TextCtrl(self, -1, style=wx.TE_MULTILINE | wx.TE_READONLY)
         self.text_display.SetFont(wx.Font(11, wx.FONTFAMILY_TELETYPE, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL))
@@ -2835,6 +2836,9 @@ class Tab_MTRPROV(wx.Panel):
         #gdsizer9
         write_button = wx.Button(self, -1, 'Write All', size=wx.Size(450, 38))
         write_button.SetFont(buttonfont)
+        #gdlcso
+        self.Lcsocheckbox = wx.CheckBox(self, label="Set to operational (irreversible)", style = wx.CHK_2STATE)
+        #self.Lcsocheckbox.Disable()
 
         clearimage = wx.Image(config.IMAGEPATH + "/images/clear.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap()
         clearbutton = wx.BitmapButton(self, -1, clearimage)
@@ -2865,6 +2869,8 @@ class Tab_MTRPROV(wx.Panel):
         gdsizer8.Add(self.PAIcheckbox, 5, wx.LEFT|wx.RIGHT|wx.EXPAND, 8)
         
         gdsizer9.Add(write_button, 1, wx.LEFT|wx.RIGHT|wx.EXPAND, 8)
+        
+        gdlcso.Add(self.Lcsocheckbox, 1, wx.LEFT|wx.RIGHT|wx.EXPAND, 8)
 
         # Add to backbuttonsizer
         backbuttonsizer.Add(backbutton, 0, wx.ALIGN_LEFT | wx.ALIGN_BOTTOM, 0)
@@ -2881,6 +2887,7 @@ class Tab_MTRPROV(wx.Panel):
         midsizer.Add(gdsizer7, 0, wx.EXPAND|wx.ALL, 4)
         midsizer.Add(gdsizer8, 0, wx.EXPAND|wx.ALL, 4)
         midsizer.Add(gdsizer9, 0, wx.ALIGN_CENTRE | wx.ALL, 4)
+        midsizer.Add(gdlcso, 0, wx.LEFT | wx.ALL, 4)
         midsizer.Add(backbuttonsizer, 1, wx.LEFT | wx.BOTTOM, 5)
 
         # Add to mainhorisizer
@@ -2902,6 +2909,7 @@ class Tab_MTRPROV(wx.Panel):
         select_cdbin_button.Bind(wx.EVT_LEFT_DOWN,self.OnWriteCD)
         select_DAC_button.Bind(wx.EVT_LEFT_DOWN,self.OnWriteDac)
         select_PAI_button.Bind(wx.EVT_LEFT_DOWN,self.OnWritePai)
+        self.Lcsocheckbox.Bind(wx.EVT_CHECKBOX, self.OnLcsocheckboxChanged)
         write_button.Bind(wx.EVT_BUTTON, self.OnWriteAll)
 
         clearbutton.Bind(wx.EVT_BUTTON, self.OnFlush)
@@ -3493,6 +3501,35 @@ class Tab_MTRPROV(wx.Panel):
                     self.text_display.AppendText(f"\nCert1: {line1}")
                     self.text_display.AppendText(f"\nCert2: {line2}\n")
             return False
+            
+    def OnLcsocheckboxChanged(self, event):
+        if self.Lcsocheckbox.IsChecked():
+            wx.MessageBox("Provisioning OIDs to operational mode...", "Info", wx.OK | wx.ICON_INFORMATION)
+            self.provision_oids()
+
+    def provision_oids(self):
+        #Provision the OIDs to change condition conf:e140.
+        target_oids = ["e0e8", "f1e0", "e0e8"]
+        target_oid_meta = "2008d00320e140d10100"  # Metadata with conf:e140
+        
+        for oid in target_oids:
+            try:
+                # Convert metadata to binary file
+                meta_filename = f"conf_pbs_metadata_{oid}.bin"
+                with open(meta_filename, "wb") as meta_file:
+                    meta_file.write(bytes.fromhex(target_oid_meta))
+                
+                # Write metadata to the OID
+                cmd_write = ["trustm_metadata", "-w", f"0x{oid}", "-F", meta_filename]
+                subprocess.run(cmd_write, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                
+                # Verify the change
+                cmd_read = ["trustm_metadata", "-r", f"0x{oid}"]
+                result = subprocess.run(cmd_read, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                
+                wx.MessageBox(f"Successfully provisioned OID 0x{oid}:\n{result.stdout.decode()}", "Success", wx.OK | wx.ICON_INFORMATION)
+            except subprocess.CalledProcessError as e:
+                wx.MessageBox(f"Error provisioning OID 0x{oid}:\n{e.stderr.decode()}", "Error", wx.OK | wx.ICON_ERROR)
             
     def OnFlush(self, evt):
         self.text_display.Clear()
