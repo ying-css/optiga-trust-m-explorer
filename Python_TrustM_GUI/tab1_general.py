@@ -2796,6 +2796,7 @@ class Tab_MTRPROV(wx.Panel):
         gdsizer9 = wx.BoxSizer(wx.HORIZONTAL)
         gdlcso = wx.BoxSizer (wx.HORIZONTAL)
 
+
         self.text_display = wx.TextCtrl(self, -1, style=wx.TE_MULTILINE | wx.TE_READONLY)
         self.text_display.SetFont(wx.Font(11, wx.FONTFAMILY_TELETYPE, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL))
         #gdsizer1
@@ -2910,6 +2911,7 @@ class Tab_MTRPROV(wx.Panel):
         select_DAC_button.Bind(wx.EVT_LEFT_DOWN,self.OnWriteDac)
         select_PAI_button.Bind(wx.EVT_LEFT_DOWN,self.OnWritePai)
         self.Lcsocheckbox.Bind(wx.EVT_CHECKBOX, self.OnLcsocheckboxChanged)
+
         write_button.Bind(wx.EVT_BUTTON, self.OnWriteAll)
 
         clearbutton.Bind(wx.EVT_BUTTON, self.OnFlush)
@@ -3501,7 +3503,7 @@ class Tab_MTRPROV(wx.Panel):
                     self.text_display.AppendText(f"\nCert1: {line1}")
                     self.text_display.AppendText(f"\nCert2: {line2}\n")
             return False
-            
+
     def OnLcsocheckboxChanged(self, event):
         if self.Lcsocheckbox.IsChecked():
             wx.MessageBox("Provisioning OIDs to operational mode...", "Info", wx.OK | wx.ICON_INFORMATION)
