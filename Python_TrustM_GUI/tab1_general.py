@@ -2970,9 +2970,20 @@ class Tab_MTRPROV(wx.Panel):
         
         self.text_display.AppendText(f"Error: Chip ID {chipID} not found in {filename}.\n")
         return None
+        
+    def OnUpdatePBS(self,pbs_value):
+        #Write PBS value to pbsfile.txt
+        try:
+            pbs_file_path = os.path.join(config.EXEPATH, "pbsfile.txt")
+            with open(pbs_file_path, 'w') as f:
+                f.write(pbs_value)
+            return True
+        except Exception as e:
+            self.text_display.AppendText(f"\nError updating PBS to file: {str(e)}\n")
+            return False
 
     def OnSelectBundle(self, evt):
-        chipID = str(self.get_chipID())
+        chipID = str(self.OnChipID())
         
         with wx.FileDialog(self, "Choose bundle file", 
                           wildcard="7z files (*.7z)|*.7z",
@@ -3275,6 +3286,8 @@ class Tab_MTRPROV(wx.Panel):
             self.text_display.AppendText(f"\nError executing trustm_cert: {command_output}\n")
             return
 
+        self.text_display.AppendText(command_output) 
+
         # Display extracted DAC certificate
         command2_output = exec_cmd.execCLI(["openssl", "x509", "-in", dac_pem_path, "-text", "-noout"])
         if isinstance(command2_output , bytes):
@@ -3505,9 +3518,9 @@ class Tab_MTRPROV(wx.Panel):
     def OnLcsocheckboxChanged(self, event):
         if self.Lcsocheckbox.IsChecked():
             wx.MessageBox("Provisioning OIDs to operational mode...", "Info", wx.OK | wx.ICON_INFORMATION)
-            self.provision_oids()
+            self.OnProvisionOids()
 
-    def provision_oids(self):
+    def OnProvisionOids(self):
         #Provision the OIDs to change condition conf:e140.
         target_oids = ["e0e8", "f1e0", "e0e8"]
         target_oid_meta = "2008d00320e140d10100"  # Metadata with conf:e140
@@ -3538,7 +3551,6 @@ class Tab_MTRPROV(wx.Panel):
         self.Parent.Parent.OnCloseWindow(None)
 
 class Tab1Frame(wx.Frame):
-    
     def __init__(self, parent, title):
         wx.Frame.__init__(self, parent, title="General", size=(1280, 720), style=(wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX)))
         self.Centre(wx.BOTH)
