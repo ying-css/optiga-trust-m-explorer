@@ -531,7 +531,7 @@ Writes the PAI to OID 0xE0E8. By selecting "PAI(E0E8)", GUI will start to search
 
 Writes CD, DAC and PAI to corresponding OIDs in one time. Select "Write All" to write them  in order. "Write All Operation Completed Successfully and Verification Passes" will be printed when all writings are finished successfully.
 
-![](images/General_Features/mtr_matter_provisioning/write-all.png)
+![](images/General_Features/mtr_matter_provisioning/write_all.png)
 
 ### Operational Mode
 
