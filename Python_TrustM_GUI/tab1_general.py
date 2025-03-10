@@ -11,6 +11,7 @@ import xml.dom.minidom
 import math
 import re
 import time
+import shutil
 
 class Tab_GEN(wx.Panel):
     
@@ -20,7 +21,12 @@ class Tab_GEN(wx.Panel):
     noDataOIDList = ['E0C2', 'E0C5', 'F1C2', 'E0F0', 'E0F1', 'E0F2', 'E0F3', 'E0FC', 'E0FD', 'E200']
         
     def __init__(self, parent):
-        
+        # Define PBS path variables
+        parent_dir = os.path.dirname(os.getcwd())  
+        self.pbs_dir = os.path.join(parent_dir, "linux-optiga-trust-m", "pbs")
+        self.pbs_file = os.path.join(self.pbs_dir, "pbsfile.txt")
+        self.default_pbs_value = "0102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F202122232425262728292A2B2C2D2E2F303132333435363738393A3B3C3D3E3F40"
+
         wx.Panel.__init__(self, parent)
         
         textctrlfont = wx.Font()
@@ -33,7 +39,10 @@ class Tab_GEN(wx.Panel):
         mainhorisizer = wx.BoxSizer(wx.HORIZONTAL)
         
         midsizer = wx.BoxSizer(wx.VERTICAL)
-        gdsizer3 = wx.GridSizer(rows=7, cols=1, vgap=25, hgap=10)
+        gdsizer1 = wx.GridSizer(rows=1, cols=1, vgap=15, hgap=10)
+        gdsizer2 = wx.BoxSizer(wx.HORIZONTAL)
+        gdsizer3 = wx.GridSizer(rows=1, cols=2, vgap=15, hgap=10)
+        gdsizer4 = wx.GridSizer(rows=6, cols=1, vgap=15, hgap=10)
         
         backbuttonsizer = wx.BoxSizer(wx.HORIZONTAL)
         
@@ -49,6 +58,13 @@ class Tab_GEN(wx.Panel):
         self.button_chip.SetFont(buttonfont)
         button_meta = wx.Button(self, 1, 'Read Metadata For All Data Objects', size = wx.Size(350, 50))
         button_meta.SetFont(buttonfont)
+        text_pbs_value = wx.StaticText(self, -1, "PBS Value:", size=wx.Size(100, 30),
+                                           style=wx.ALIGN_CENTER)
+        self.pbsvalue_display = wx.TextCtrl(self, -1)
+        self.pbsvalue_display.SetFont(textctrlfont)
+        self.pbsvalue_display.SetMaxSize((250, -1))
+        button_update = wx.Button(self, 1, 'Update', size = wx.Size(170, 40))
+        button_reset = wx.Button(self, 1, 'Reset', size = wx.Size(170, 40))
         button_data = wx.Button(self, 1, 'Read All Objects Data', size = wx.Size(350, 50))
         button_data.SetFont(buttonfont)
         button_priv = wx.Button(self, 1, 'Read Metadata For Private Key Objects', size = wx.Size(350, 50))
@@ -73,8 +89,6 @@ class Tab_GEN(wx.Panel):
        
         #Add mainhorisizer to mainsizer
         mainsizer.AddSpacer(5)
-        
-
         mainsizer.Add(mainhorisizer, 1, wx.EXPAND)
        
         # Add Sub Sizers to the mainhorisizer
@@ -87,15 +101,21 @@ class Tab_GEN(wx.Panel):
 
         # Add sizers to midsizer
         midsizer.AddSpacer(20)
-        midsizer.Add(gdsizer3, 0, wx.ALIGN_CENTRE | wx.ALL, 10)
+        midsizer.Add(gdsizer1, 0, wx.ALIGN_CENTRE)  # No extra spacing for the first sizer
+        midsizer.Add(gdsizer2, 0, wx.ALIGN_CENTRE | wx.TOP, 15)  # Only top padding
+        midsizer.Add(gdsizer3, 0, wx.ALIGN_CENTRE | wx.TOP, 15)
+        midsizer.Add(gdsizer4, 0, wx.ALIGN_CENTRE | wx.TOP, 15)
         
         midsizer.AddSpacer(20)
         midsizer.Add(backbuttonsizer,1,wx.LEFT | wx.BOTTOM, 5)
         
         #add buttons into gdsizer3
-        gdsizer3.AddMany([
-           # (self.button_step1),
-           (self.button_chip),
+        gdsizer1.Add(self.button_chip)
+        gdsizer2.Add(text_pbs_value,3, wx.LEFT | wx.RIGHT)
+        gdsizer2.Add(self.pbsvalue_display, 8, wx.LEFT | wx.RIGHT | wx.EXPAND, 8)
+        gdsizer3.Add(button_update, 0, wx.LEFT|wx.EXPAND)
+        gdsizer3.Add(button_reset, 0, wx.RIGHT|wx.EXPAND)
+        gdsizer4.AddMany([
            (button_meta),
            (button_data),
            (button_priv),
@@ -103,13 +123,14 @@ class Tab_GEN(wx.Panel):
            (button_status),
            (button_export_config),
        ])
-                       
         # Set Default inputs for Text Boxes      
         # attach objects to the sizer
         # declare and bind events     
         
         #bind events     
         self.button_chip.Bind(wx.EVT_BUTTON, self.OnChipInfo)
+        button_update.Bind(wx.EVT_BUTTON,self.OnUpdate)
+        button_reset.Bind(wx.EVT_BUTTON,self.OnReset)
         button_meta.Bind(wx.EVT_BUTTON, self.OnReadMeta)
         button_data.Bind(wx.EVT_BUTTON, self.OnReadData)
         button_priv.Bind(wx.EVT_BUTTON, self.OnReadPriv)
@@ -224,7 +245,39 @@ class Tab_GEN(wx.Panel):
         self.text_display.AppendText(command_output)
         self.text_display.AppendText("\n'/bin/trustm_read_status' executed\n")
         self.text_display.AppendText("++++++++++++++++++++++++++++++++\n")
-    
+        
+    def OnUpdate(self, event):
+        pbs_value = self.pbsvalue_display.GetValue().strip()  # Get input and remove extra spaces
+        text = ""
+
+        if not os.path.exists(self.pbs_dir):
+            os.makedirs(self.pbs_dir)
+
+        if not pbs_value:
+            pbs_value = self.default_pbs_value
+            text = "PBS file updated with default value.\n"
+        else:
+            text = "PBS file updated with input value. \n"
+
+        # Write to file
+        try:
+            with open(self.pbs_file, 'w') as f:
+                f.write(pbs_value)
+            self.text_display.AppendText(text)
+        except Exception as e:
+            self.text_display.AppendText(f"Error writing to PBS file:\n{str(e)}\n")
+            
+    def OnReset(self, event):
+        if os.path.exists(self.pbs_dir):  # Check if the directory exists
+            try:
+                shutil.rmtree(self.pbs_dir)  # Remove the directory and its contents
+                self.text_display.AppendText("PBS file removed.\n")
+            except Exception as e:
+                self.text_display.AppendText(f"Error removing PBS directory:\n{str(e)}\n")
+                
+        else:
+                self.text_display.AppendText("PBS file does not exist. You may proceed to the next step.\n")
+     
     def OnExportConfig(self, evt):
         frame = wx.Frame(None, -1, '*.*')
         frame.SetSize(0,0,200,50)
@@ -1066,8 +1119,6 @@ class Tab_GEN(wx.Panel):
     # then the second parent is the frame, from which we call the destruction
     def OnBack(self, evt):
         self.Parent.Parent.OnCloseWindow(None)
-    
-
 
 class Tab_KEY(wx.Panel):
     def __init__(self, parent):
@@ -2972,9 +3023,23 @@ class Tab_MTRPROV(wx.Panel):
         
         self.text_display.AppendText(f"Error: Chip ID {chipID} not found in {filename}.\n")
         return None
+        
+    def OnUpdatePBS(self,pbs_value):
+        try:
+                pbs_dir_path = os.path.join(config.EXEPATH, "pbs")
+                if not os.path.exists(pbs_dir_path):
+                        self.text_display.AppendText(f"pbs file does not existing. Creating the file now\n")
+                        os.makedirs(pbs_dir_path)
+                pbs_file_path = os.path.join(pbs_dir_path, "pbsfile.txt")
+                with open(pbs_file_path, 'w') as f:
+                        f.write(pbs_value)
+                return True
+        except Exception as e:
+                self.text_display.AppendText(f"\nError updating PBS to file: {str(e)}\n")
+                return False
 
     def OnSelectBundle(self, evt):
-        chipID = str(self.get_chipID())
+        chipID = str(self.OnChipID())
         
         with wx.FileDialog(self, "Choose bundle file", 
                           wildcard="7z files (*.7z)|*.7z",
@@ -3284,7 +3349,10 @@ class Tab_MTRPROV(wx.Panel):
         if command2_output is None or "Error" in command2_output :
             self.text_display.AppendText(f"\nError displaying DAC certificate: {command2_output} \n")
             return
-            
+
+        self.text_display.AppendText("========================================================\n")
+        self.text_display.AppendText(command2_output) 
+        self.text_display.AppendText("========================================================\n")
         self.OnVerifyDAC(command2_output)
     
     def OnWritePai(self, evt):
@@ -3345,6 +3413,9 @@ class Tab_MTRPROV(wx.Panel):
             self.text_display.AppendText(f"\nError displaying PAI certificate: {command2_output}\n")
             return
 
+        self.text_display.AppendText("========================================================\n")
+        self.text_display.AppendText(command2_output)  
+        self.text_display.AppendText("========================================================\n")
         self.OnVerifyPAI(command2_output)
         
     def OnWriteAll(self, evt):
@@ -3360,7 +3431,7 @@ class Tab_MTRPROV(wx.Panel):
             wx.MessageBox("Transport key cannot be empty.", "Error", wx.OK | wx.ICON_ERROR)
             return None
             
-        if self.cdbin_display.GetValue() == "to select .bin file":
+        if self.cdbin_display.GetValue() == "to select .bin or .der file":
             wx.MessageBox("No CD binary file selected. Please select a file first.", 
                          "Error", wx.OK | wx.ICON_ERROR)
             self.write_all_success = False
