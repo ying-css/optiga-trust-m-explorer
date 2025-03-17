@@ -23,7 +23,7 @@ class Tab_GEN(wx.Panel):
     def __init__(self, parent):
         # Define PBS path variables
         parent_dir = os.path.dirname(os.getcwd())  
-        self.pbs_dir = os.path.join(parent_dir, "linux-optiga-trust-m", "pbs")
+        self.pbs_dir = os.path.join(parent_dir, config.EXEPATH, "pbs")
         self.pbs_file = os.path.join(self.pbs_dir, "pbsfile.txt")
         self.default_pbs_value = "0102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F202122232425262728292A2B2C2D2E2F303132333435363738393A3B3C3D3E3F40"
 
@@ -2742,7 +2742,7 @@ class Tab_PROV(wx.Panel):
         
     def OnGenCsr1(self):
         
-        command_output = exec_cmd.execCLI(["openssl", "req", "-new", "-newkey", "rsa:2048", "-nodes", "-keyout", "private.key", "-out", "request.csr", "-config", config.EXEPATH + "/scripts/matter_provisioning/openssl_matter.cnf",  ])
+        command_output = exec_cmd.execCLI(["openssl", "req", "-new", "-newkey", "rsa:2048", "-nodes", "-keyout", "private.key", "-out", "request.csr", "-config", config.EXEPATH + "/scripts/matter_provisioning/test_files/openssl_matter.cnf",  ])
         
         self.text_display.AppendText(command_output)
         self.text_display.AppendText("\n'openssl req -new -newkey rsa:2048 -nodes -keyout private.key -out request.csr -config openssl_matter.cnf' executed\n")
@@ -2865,6 +2865,8 @@ class Tab_MTRPROV(wx.Panel):
                                            style=wx.ALIGN_CENTER)
         self.transvalue_display = wx.TextCtrl(self,-1)
         self.transvalue_display.SetFont(textctrlfont)
+        button_update = wx.Button(self, 1, 'Update PBS')
+        button_update.SetFont(buttonfont)
         #gdsizer4
         button_AutoValue = wx.Button(self, 1, 'Read Auto Value', size=wx.Size(200, 38))
         button_AutoValue.SetFont(buttonfont)
@@ -2900,13 +2902,14 @@ class Tab_MTRPROV(wx.Panel):
 
         # Add controls to GridSizers
         gdsizer1.Add(select_bundle_button, 3, wx.LEFT|wx.RIGHT|wx.EXPAND, 8)
-        gdsizer1.Add(self.bundle_display, 5, wx.LEFT|wx.RIGHT|wx.EXPAND, 8)
+        gdsizer1.Add(self.bundle_display, 5, wx.RIGHT|wx.EXPAND, 8)
 
         gdsizer2.Add(select_key_button, 3, wx.LEFT|wx.RIGHT|wx.EXPAND, 8)
-        gdsizer2.Add(self.keypath_display, 5, wx.LEFT|wx.RIGHT|wx.EXPAND, 8)
+        gdsizer2.Add(self.keypath_display, 5, wx.RIGHT|wx.EXPAND, 8)
         
-        gdsizer3.Add(text_transport_key, 3)
-        gdsizer3.Add(self.transvalue_display, 5, wx.LEFT | wx.RIGHT | wx.EXPAND, 8)
+        gdsizer3.Add(text_transport_key, 6, wx.LEFT|wx.RIGHT|wx.EXPAND, 8)
+        gdsizer3.Add(self.transvalue_display, 5, wx.EXPAND, 8)
+        gdsizer3.Add(button_update, 5, wx.LEFT|wx.RIGHT|wx.EXPAND, 8)
 
         gdsizer4.Add(button_AutoValue, 0, wx.LEFT|wx.EXPAND, 8)
         gdsizer4.Add(button_PBSValue, 0, wx.RIGHT|wx.EXPAND, 8)
@@ -2953,6 +2956,7 @@ class Tab_MTRPROV(wx.Panel):
         # Bind events
         select_bundle_button.Bind(wx.EVT_BUTTON, self.OnSelectBundle)
         select_key_button.Bind(wx.EVT_BUTTON, self.OnSelectKeyFile)
+        button_update.Bind(wx.EVT_BUTTON, self.OnUpdatePBS)
 
         button_AutoValue.Bind(wx.EVT_BUTTON, self.OnPrintAuto)
         button_PBSValue.Bind(wx.EVT_BUTTON, self.OnPrintPBS)
@@ -2962,7 +2966,6 @@ class Tab_MTRPROV(wx.Panel):
         select_DAC_button.Bind(wx.EVT_LEFT_DOWN,self.OnWriteDac)
         select_PAI_button.Bind(wx.EVT_LEFT_DOWN,self.OnWritePai)
         self.Lcsocheckbox.Bind(wx.EVT_CHECKBOX, self.OnLcsocheckboxChanged)
-
         write_button.Bind(wx.EVT_BUTTON, self.OnWriteAll)
 
         clearbutton.Bind(wx.EVT_BUTTON, self.OnFlush)
@@ -3024,15 +3027,20 @@ class Tab_MTRPROV(wx.Panel):
         self.text_display.AppendText(f"Error: Chip ID {chipID} not found in {filename}.\n")
         return None
         
-    def OnUpdatePBS(self,pbs_value):
+    def OnUpdatePBS(self,event):
+        pbs_value = self.OnKeyValue("pbs")
+        if not pbs_value:
+                self.text_display.AppendText("\nError: Could not get PBS values\n")
+                return
         try:
                 pbs_dir_path = os.path.join(config.EXEPATH, "pbs")
                 if not os.path.exists(pbs_dir_path):
-                        self.text_display.AppendText(f"pbs file does not existing. Creating the file now\n")
+                        self.text_display.AppendText(f"pbs file does not exist. Creating the file now.\n")
                         os.makedirs(pbs_dir_path)
                 pbs_file_path = os.path.join(pbs_dir_path, "pbsfile.txt")
                 with open(pbs_file_path, 'w') as f:
                         f.write(pbs_value)
+                        self.text_display.AppendText(f"\nPBSfile updated with value:{pbs_value}\n")
                 return True
         except Exception as e:
                 self.text_display.AppendText(f"\nError updating PBS to file: {str(e)}\n")
@@ -3153,13 +3161,6 @@ class Tab_MTRPROV(wx.Panel):
         if self.cdbin_display.GetValue()=="to select .bin or .der file":
             wx.MessageBox("No file selected. Please select a file first.", "Error", wx.OK | wx.ICON_ERROR)
             return
-            
-        pbs_value = self.OnKeyValue("pbs")
-        if not pbs_value:
-                self.text_display.AppendText("\nError: Could not get PBS values\n")
-                return
-        if not self.OnUpdatePBS(pbs_value):
-                return
                         
         self.text_display.AppendText("\nWrite CD into 0xf1e0\n")
         command_output = exec_cmd.execCLI([config.EXEPATH + "/bin/trustm_data", "-e", "-w", "0xf1e0", "-i", self.cd_path, "-X"])
@@ -3318,8 +3319,6 @@ class Tab_MTRPROV(wx.Panel):
         if not pbs_value:
                 self.text_display.AppendText("\nError: Could not get Auto/PBS values\n")
                 return
-        if not self.OnUpdatePBS(pbs_value):
-                return
 
         if not os.path.exists(dac_pem_path):
             self.text_display.AppendText(f"\nError: Extracted DAC PEM file {dac_pem_path} not found!\n")
@@ -3382,9 +3381,6 @@ class Tab_MTRPROV(wx.Panel):
         if not os.path.exists(pai_pem_path):
             self.text_display.AppendText(f"\nError: Extracted PAI PEM file {pai_pem_path} not found!\n")
             return
-            
-        if not self.OnUpdatePBS(pbs_value):
-                return
 
         # Write PAI certificate to 0xe0e8
         command_output = exec_cmd.execCLI([
@@ -3395,15 +3391,12 @@ class Tab_MTRPROV(wx.Panel):
             "-c", pai_pem_path,
             "-e"
         ])
-        
         if isinstance(command_output, bytes):
             command_output = command_output.decode("utf-8")
         
         if command_output is None or "Error" in command_output:
             self.text_display.AppendText(f"\nError executing trustm_cert: {command_output}\n")
-            return
-
-        self.text_display.AppendText(command_output)      
+            return  
 
         # Display extracted PAI certificate
         command2_output = exec_cmd.execCLI(["openssl", "x509", "-in", pai_pem_path, "-text", "-noout"])
@@ -3442,12 +3435,7 @@ class Tab_MTRPROV(wx.Panel):
         if not pbs_value:
             self.text_display.AppendText("\nError: Could not get PBS value\n")
             return
-            
-        # Update PBS before starting operations
-        if not self.OnUpdatePBS(pbs_value):
-            self.text_display.AppendText("\nError: Failed to update PBS\n")
-            return
-            
+
         self.text_display.AppendText("\n=== Starting Write All Operation ===\n")
         
         # Reset state and start first operation
@@ -3486,37 +3474,58 @@ class Tab_MTRPROV(wx.Panel):
             self.write_state = 0  # Reset state
             self.text_display.AppendText("\n=== Write All Operation Completed Successfully and Verification Passes===\n")
             
-    def OnVerifyCD(self, cert2_data):
+    def OnVerifyCD(self, cert2_data): 
         """Verify CD certificate by comparing with read certificate"""
-        current_dir = os.getcwd()
-        parent_dir = os.path.dirname(current_dir)
-        matter_cd_path = os.path.join(parent_dir, "linux-optiga-trust-m", "matter_cd.bin")
- 
-        # Read current CD binary
-        read_output = exec_cmd.execCLI([
-            config.EXEPATH + "/bin/trustm_data", 
-            "-r", "0xf1e0", 
-            "-o", matter_cd_path
-        ])
-        
-        # Compare binary files directly
-        with open(config.EXEPATH + "/matter_cd.bin", 'rb') as f1:
-            cert1_data = f1.read()
+        try:
+            # Use current directory for matter_cd.bin
+            matter_cd_path = os.path.join(os.getcwd(), "matter_cd.bin")
             
-        if cert1_data == cert2_data:
-            self.text_display.AppendText("\nRead back CD and verify success!\n")
-            return True
-        else:
-            self.text_display.AppendText("\nRead back CD and verification fails!\n")
+            # Create file if it doesn't exist
+            if not os.path.exists(matter_cd_path):
+                with open(matter_cd_path, 'wb') as f:
+                    f.write(cert2_data)
+
+            # Read current CD binary
+            try:
+                read_output = exec_cmd.execCLI([
+                    config.EXEPATH + "/bin/trustm_data", 
+                    "-r", "0xf1e0", 
+                    "-o", matter_cd_path, "-X"
+                ])
+                if isinstance(read_output, bytes):
+                    read_output = read_output.decode('utf-8', errors='ignore')  # Decode the bytes to string
+                    if "Error" in read_output:
+                        raise Exception(f"Error reading from device: {read_output}")
+            except Exception as exec_error:
+                self.text_display.AppendText(f"Error: {str(exec_error)}\n")
+                self.text_display.AppendText("Verification fails.\n")
+                return False
+            
+            # Compare binary files directly
+            with open(matter_cd_path, 'rb') as f1:
+                cert1_data = f1.read()
+                
+            if cert1_data == cert2_data:
+                self.text_display.AppendText("\nRead back CD and verify success!\n")
+                return True
+            else:
+                self.text_display.AppendText("\nRead back CD and verification fails!\n")
+                return False
+                
+        except Exception as e:
+            self.text_display.AppendText(f"\nError during CD verification: {str(e)}\n")
             return False
 
+            
     def OnVerifyPAI(self, cert2_output):
         """Verify PAI certificate by comparing with read certificate"""
         current_dir = os.getcwd()
-        parent_dir = os.path.dirname(current_dir)
-        matter_pai_path = os.path.join(parent_dir, "linux-optiga-trust-m", "matter_pai.pem")
+        matter_pai_path = os.path.join(current_dir, "matter_pai.pem")
+    
+        # Ensure the file exists, if not create it
+        if not os.path.exists(matter_pai_path):
+                exec_cmd.execCLI([config.EXEPATH + "/bin/trustm_cert", "-r", "0xe0e8", "-o", matter_pai_path])
         
-        exec_cmd.execCLI([config.EXEPATH + "/bin/trustm_cert", "-r", "0xe0e8", "-o", matter_pai_path])
         cert1_output = exec_cmd.execCLI(["openssl", "x509", "-in", matter_pai_path, "-text", "-noout"])
         if isinstance(cert1_output, bytes):
             cert1_output = cert1_output.decode('utf-8')
@@ -3542,13 +3551,15 @@ class Tab_MTRPROV(wx.Panel):
                     self.text_display.AppendText(f"\nCert1: {line1}")
                     self.text_display.AppendText(f"\nCert2: {line2}\n")
             return False
-            
+
+
     def OnVerifyDAC(self, cert2_output):
         current_dir = os.getcwd()
-        parent_dir = os.path.dirname(current_dir)
-        matter_dac_path = os.path.join(parent_dir, "linux-optiga-trust-m", "matter_dac.pem")
+        matter_dac_path = os.path.join(current_dir, "matter_dac.pem")
  
-        exec_cmd.execCLI([config.EXEPATH + "/bin/trustm_cert", "-r", "0xe0e0", "-o", matter_dac_path])
+        if not os.path.exists(matter_dac_path):
+                exec_cmd.execCLI([config.EXEPATH + "/bin/trustm_cert", "-r", "0xe0e0", "-o", matter_dac_path])
+                
         cert1_output = exec_cmd.execCLI(["openssl", "x509", "-in", matter_dac_path, "-text", "-noout"])
         if isinstance(cert1_output, bytes):
                 cert1_output = cert1_output.decode('utf-8')
@@ -3582,7 +3593,7 @@ class Tab_MTRPROV(wx.Panel):
 
     def provision_oids(self):
         #Provision the OIDs to change condition conf:e140.
-        target_oids = ["e0e8", "f1e0", "e0e8"]
+        target_oids = ["f1e0", "e0e8"]
         target_oid_meta = "2008d00320e140d10100"  # Metadata with conf:e140
         
         for oid in target_oids:
