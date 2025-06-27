@@ -278,6 +278,24 @@ class Tab_GEN(wx.Panel):
         else:
                 self.text_display.AppendText("PBS file does not exist. You may proceed to the next step.\n")
      
+     
+    def OnReset(self, event):
+        if os.path.isdir(self.pbs_dir):  # Check if the PBS directory exists
+            pbsfile_path = os.path.join(self.pbs_dir, "pbsfile.txt")
+            default_pbs = (
+                "0102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F"
+                "202122232425262728292A2B2C2D2E2F303132333435363738393A3B3C3D3E3F40"
+            )
+            try:
+                with open(pbsfile_path, "w") as f:
+                    f.write(default_pbs)
+                self.text_display.AppendText("pbsfile.txt has been reset to the default PBS value.\n")
+            except Exception as e:
+                self.text_display.AppendText(f"Error writing to pbsfile.txt:\n{str(e)}\n")
+        else:
+                self.text_display.AppendText("PBS directory not found.\n")
+        
+        
     def OnExportConfig(self, evt):
         frame = wx.Frame(None, -1, '*.*')
         frame.SetSize(0,0,200,50)

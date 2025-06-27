@@ -20,7 +20,7 @@ Tool highlights include the opportunity to explore OPTIGA™ Trust M features an
     RSA® up to 2048
     AES key up to 256 ,
 -   Encrypts and decrypts data using ECC/RSA/AES
--   Signs and verifies data with ECC
+-   Signs and verifies data with ECC/RSA
 
 ## Use cases
 
