@@ -41,6 +41,9 @@ RSA_Client_thread_active_flag=0
 ECC_Server_thread_active_flag=0
 ECC_Client_thread_active_flag=0
 
+BASE_DIR = os.path.dirname(os.path.realpath(__file__))
+WORKING_SPACE = os.path.join(BASE_DIR, "working_space")
+os.makedirs(WORKING_SPACE, exist_ok=True)
 
 def run_openssl_command(command, timeout):
     try:
@@ -283,27 +286,35 @@ class Tab_ECC_CS(wx.Panel):
 
     def OnGenServerPrivateKey(self, evt):      
         self.text_server.AppendText("Creating Server ECC Private Key... \n")
-        command_output = exec_cmd.execCLI([
-                             "openssl", "ecparam",
-                             "-out", "server1_privkey.pem",
-                             "-name", "prime256v1",
-                             "-genkey"         
-                         ])
+        cmd = [
+        "openssl", "genpkey",
+        "-provider-path", "/usr/local/lib/ossl-modules",
+        "-provider", "trustm_provider",
+        "-provider", "default",
+        "-algorithm", "EC",
+        "-pkeyopt", "ec_paramgen_curve:prime256v1",  
+        "-out", os.path.join(WORKING_SPACE, "server1_privkey.pem"),   
+        ]
+        command_output = exec_cmd.execCLI(cmd)
         self.text_server.AppendText(command_output)
-        self.text_server.AppendText("'openssl ecparam -out server1_privkey.pem -name prime256v1 -genkey' executed \n")
+        self.text_server.AppendText("Executed: " + " ".join(cmd) + "\n")
         self.text_server.AppendText("+++++++++++++++++++++++++++++++++++++++++++\n")
         
     def OnGenServerKeyCSR(self, evt):
         self.text_server.AppendText("Creating Server ECC Keys CSR... \n")
-        command_output = exec_cmd.execCLI([
-                             "openssl", "req",
-                             "-new", 
-                             "-key", "server1_privkey.pem",
-                             "-subj", "/CN=Server1/O=Infineon/C=SG",
-                             "-out", "server1.csr",
-                         ])
+        cmd = [
+        "openssl", "req",
+        "-provider-path", "/usr/local/lib/ossl-modules",
+        "-provider", "trustm_provider",
+        "-provider", "default",
+        "-new",
+        "-key", os.path.join(WORKING_SPACE, "server1_privkey.pem"),
+        "-subj", "/CN=Server1/O=Infineon/C=SG",
+        "-out", os.path.join(WORKING_SPACE, "server1.csr")
+        ]
+        command_output = exec_cmd.execCLI(cmd)
         self.text_server.AppendText(command_output)
-        self.text_server.AppendText("'openssl req -new -key server1_privkey.pem -subj /CN=Server1/O=Infineon/C=SG -out server1.csr' executed \n")
+        self.text_server.AppendText("Executed: " + " ".join(cmd) + "\n")
         self.text_server.AppendText("+++++++++++++++++++++++++++++++++++++++++++\n")
         
     def OnGenServerCert(self, evt):
@@ -311,14 +322,14 @@ class Tab_ECC_CS(wx.Panel):
         command_output = exec_cmd.execCLI([
                              "openssl", "x509",
                              "-req",
-                             "-in", "server1.csr",
+                             "-in", os.path.join(WORKING_SPACE, "server1.csr"),
                              "-CA", config.CERT_PATH + "/OPTIGA_Trust_M_Infineon_Test_CA.pem",
                              "-CAkey", config.CERT_PATH + "/OPTIGA_Trust_M_Infineon_Test_CA_Key.pem",
                              "-CAcreateserial",
-                             "-out", "server1.crt",
+                             "-out", os.path.join(WORKING_SPACE, "server1.crt"),
                              "-days", "365",
                              "-sha256",
-                             "-extfile", "openssl.cnf",
+                             "-extfile", os.path.join(config.EXEPATH, "openssl.cnf"),
                              "-extensions", "cert_ext",
                          ])
         self.text_server.AppendText(command_output)

@@ -10,6 +10,7 @@ def find_bin_directory(start_path):
 current_directory = os.path.dirname(os.path.realpath(__file__))
     
 dirname = find_bin_directory(current_directory)
-EXEPATH=os.path.dirname(os.path.realpath(__file__)) + "/" + dirname
+EXEPATH = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                       "components", "linux-optiga-trust-m")
 CERT_PATH=EXEPATH+"/scripts/certificates"
 IMAGEPATH=os.path.dirname(os.path.realpath(__file__))
