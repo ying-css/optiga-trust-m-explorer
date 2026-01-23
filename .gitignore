@@ -39,3 +39,4 @@ Python_TrustM_GUI/*.pem
 Python_TrustM_GUI/*.csr
 Python_TrustM_GUI/*.crt
 Python_TrustM_GUI/test*.pem
+Python_TrustM_GUI/optiga-trust-m-openssl/
