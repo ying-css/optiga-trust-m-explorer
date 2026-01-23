@@ -30,3 +30,12 @@ unseal*.*
 mysig
 autoconf*
 Python_TrustM_GUI/bin
+
+# Explorer generated/build artifacts
+Python_TrustM_GUI/components/
+Python_TrustM_GUI/working_space/
+Python_TrustM_GUI/*privkey*.pem
+Python_TrustM_GUI/*.pem
+Python_TrustM_GUI/*.csr
+Python_TrustM_GUI/*.crt
+Python_TrustM_GUI/test*.pem
