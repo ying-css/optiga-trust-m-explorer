@@ -33,10 +33,17 @@ Python_TrustM_GUI/bin
 
 # Explorer generated/build artifacts
 Python_TrustM_GUI/components/
-Python_TrustM_GUI/working_space/
-Python_TrustM_GUI/*privkey*.pem
+Python_TrustM_GUI/optiga-trust-m-openssl/
+Python_TrustM_GUI/__pycache__/
+**/__pycache__/
+*.pyc
+
+# Generated crypto artifacts (keep working_space templates/samples tracked)
 Python_TrustM_GUI/*.pem
 Python_TrustM_GUI/*.csr
 Python_TrustM_GUI/*.crt
 Python_TrustM_GUI/test*.pem
-Python_TrustM_GUI/optiga-trust-m-openssl/
+Python_TrustM_GUI/working_space/*.pem
+Python_TrustM_GUI/working_space/*.csr
+Python_TrustM_GUI/working_space/*.crt
+Python_TrustM_GUI/working_space/*.pub

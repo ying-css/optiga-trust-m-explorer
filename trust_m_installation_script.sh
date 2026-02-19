@@ -141,6 +141,9 @@ sudo make install
 
 echo "-----> Build optiga-trust-m-openssl"
 cd "$OPENSSL_PATH"
+
+sudo rm -f /usr/lib/aarch64-linux-gnu/ossl-modules/trustm_provider.so
+
 if [ -f CMakeLists.txt ]; then
   cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local
   cmake --build build -j5

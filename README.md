@@ -65,6 +65,19 @@ For more information on how to setup the tool environment, refer to the [OPTIGA�
 
 ![](images/Setup/bookworm.png)
 
+## Installation (components)
+The Explorer GUI relies on locally built components:
+
+- **Trust M Linux CLI tools** (e.g. `trustm_chipinfo`, `trustm_read_data`)
+- **Trust M OpenSSL provider** (`trustm_provider`) for OpenSSL 3
+
+### Install/build
+From the repository root, run:
+
+```sh
+./trust_m_installation_script.sh
+```
+
 ## User guide
 
 Learn more about the tool, how it works and OPTIGA™ Trust M functionality by the following example illustrations and simple step-by-step instructions;  see the [OPTIGA™ Trust M Explorer User Guide](./User%20Guide.md) for details.
@@ -76,4 +89,3 @@ You will find relevant resources (tools, open source host code and application n
 ## License
 
 The OPTIGA™ Trust M Explorer is released under the MIT License; see the [LICENSE](LICENSE) file for details.
-

@@ -1602,7 +1602,7 @@ Input data :
 Success
 ========================================================
 
-/trustm_symmetric_enc -m 0x09 -v /home/pi/optiga-trust-m-explorer/Python_TrustM_GUI/linux-optiga-trust-m/scripts/misc/iv_aes256.bin -i mydata.txt -o aes256.enc is executed
+/trustm_symmetric_enc -m 0x09 -v /home/pi/optiga-trust-m-explorer/Python_TrustM_GUI/components/linux-optiga-trust-m/scripts/misc/iv_aes256.bin -i mydata.txt -o aes256.enc is executed
 
 ++++++++++++++++++++++++++++++++++++++++++++
 ```
@@ -1620,14 +1620,14 @@ Encrypting AES 256 key...
 ========================================================
 mode             : 0x0009 
 Output File Name : aes256.enc 
-Input File Name  : /home/pi/optiga-trust-m-explorer/Python_TrustM_GUI/linux-optiga-trust-m/scripts/misc/mydata.txt 
+Input File Name  : /home/pi/optiga-trust-m-explorer/Python_TrustM_GUI/components/linux-optiga-trust-m/scripts/misc/mydata.txt 
 Input data : 
 	6D 79 64 61 74 61 31 32 33 34 35 36 37 38 39 0A 
 ......
 Success
 ========================================================
 
-/trustm_symmetric_enc -m 0x09 -v /home/pi/optiga-trust-m-explorer/Python_TrustM_GUI/linux-optiga-trust-m/scripts/misc/iv_aes256.bin -i /home/pi/optiga-trust-m-explorer/Python_TrustM_GUI/linux-optiga-trust-m/scripts/misc/mydata.txt -o  aes256.enc is executed
+/trustm_symmetric_enc -m 0x09 -v /home/pi/optiga-trust-m-explorer/Python_TrustM_GUI/components/linux-optiga-trust-m/scripts/misc/iv_aes256.bin -i /home/pi/optiga-trust-m-explorer/Python_TrustM_GUI/components/linux-optiga-trust-m/scripts/misc/mydata.txt -o  aes256.enc is executed
 
 ++++++++++++++++++++++++++++++++++++++++++++
 ```
@@ -1651,7 +1651,7 @@ Input data :
 	77 57 81 E5 AC E4 06 A6 F4 91 7C C0 11 06 95 18 
 	09 25 2B C0 62 5F C7 D5 78 DD A3 C7 82 28 9B 88 
 	
-IV File Name  : /home/pi/optiga-trust-m-explorer/Python_TrustM_GUI/linux-optiga-trust-m/scripts/misc/iv_aes256.bin 
+IV File Name  : /home/pi/optiga-trust-m-explorer/Python_TrustM_GUI/components/linux-optiga-trust-m/scripts/misc/iv_aes256.bin 
 Initialized value : 
 	69 6E 69 74 69 61 6C 69 7A 65 64 76 32 35 36 0A 
 	
@@ -1661,7 +1661,7 @@ OPTIGA execution time: 0.1795 sec.
 Success
 ========================================================
 
-/trustm_symmetric_dec -m 0x09 -v/home/pi/optiga-trust-m-explorer/Python_TrustM_GUI/linux-optiga-trust-m/scripts/misc/iv_aes256.bin -i aes256.enc -o mydata.txt.dec  is executed
+/trustm_symmetric_dec -m 0x09 -v/home/pi/optiga-trust-m-explorer/Python_TrustM_GUI/components/linux-optiga-trust-m/scripts/misc/iv_aes256.bin -i aes256.enc -o mydata.txt.dec  is executed
 
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -1744,8 +1744,7 @@ Select "Create Client ECC Key and CSR"
 Creating new ECC 256 key length with Auth/Enc/Sign usage and creating a certificate request...
 Input OID E0F3
 Saving public EC key to OID : 0xF1D3 ...
-'openssl req -provider trustm_provider -key 0xe0f3:*:NEW:0x03:0x13 -new -out client1_e0f3.csr -subj /CN=TrustM/O=Infineon/C=SG' executed 
-Certificate Request:
+openssl req -provider-path /usr/local/lib/ossl-modules -provider trustm_provider -provider default -key 0xe0f3:*:NEW:0x03:0x13 -new -out client1_e0f3.csr -subj /CN=TrustM/O=Infineon/C=SG Certificate Request:
     Data:
         Version: 1 (0x0)
         Subject: CN = TrustM, O = Infineon, C = SG
@@ -1792,7 +1791,7 @@ Starting an OpenSSL server
 Start an OpenSSL S_Server instance by selecting "Start/Stop Server"  
 
 ```shell
-openssl s_server -cert server1.crt -key server1_privkey.pem -accept 5000 -verify_return_error -Verify 1 -CAfile /home/pi/optiga-trust-m-explorer/Python_TrustM_GUI/linux-optiga-trust-m/scripts/certificates/OPTIGA_Trust_M_Infineon_Test_CA.pem
+openssl s_server -cert server1.crt -key server1_privkey.pem -accept 5000 -verify_return_error -Verify 1 -CAfile /home/pi/optiga-trust-m-explorer/Python_TrustM_GUI/components/linux-optiga-trust-m/scripts/certificates/OPTIGA_Trust_M_Infineon_Test_CA.pem
 
 verify depth is 1, must return a certificate
 Using default temp DH parameters
@@ -1809,7 +1808,7 @@ Start an OpenSSL Client and connect  with OpenSSL Server by selecting "Start/Sto
 
 
 ```shell
-openssl s_client -servername Server1 -connect localhost:5000 -client_sigalgs ECDSA+SHA256 -provider trustm_provider -provider default -cert client1_e0f3.crt -key 0xe0f3:^ -verify 1 -CAfile /home/pi/optiga-trust-m-explorer/Python_TrustM_GUI/linux-optiga-trust-m/scripts/certificates/OPTIGA_Trust_M_Infineon_Test_CA.pem
+openssl s_client -servername Server1 -connect localhost:5000 -client_sigalgs ECDSA+SHA256 -provider-path /usr/local/lib/ossl-modules -provider trustm_provider -provider default -cert client1_e0f3.crt -key 0xe0f3:^ -verify 1 -CAfile /home/pi/optiga-trust-m-explorer/Python_TrustM_GUI/components/linux-optiga-trust-m/scripts/certificates/OPTIGA_Trust_M_Infineon_Test_CA.pem
 
 verify depth is 1
 depth=1 C = DE, O = Infineon Technologies AG, OU = OPTIGA(TM), CN = Infineon OPTIGA(TM) Trust M Test CA 000
@@ -1915,10 +1914,9 @@ Creating new RSA 2048 key length with Auth/Enc/Sign usage and creating a certifi
 Input OID E0FC
 Generating RSA keypair using TrustM....
 Writing public key to OID 0xF1E0
-'openssl req -provider trustm_provider -key 0xe0fc:*:NEW:0x42:0x13 -new -out client2_rsa.csr -subj /CN=TrustM/O=Infineon/C=SG' executed 
+openssl req -provider-path /usr/local/lib/ossl-modules -provider trustm_provider -provider default -key 0xe0fc:*:NEW:0x42:0x13 -new -out client2_rsa.csr -subj /CN=TrustM/O=Infineon/C=SG
 +++++++++++++++++++++++++++++++++++++++++++
 ```
-
 Expected Output: OpenSSL-Provider RSA (Client/Server) Create Client RSA key and CSR (For Client)
 
 Generate Client Certificate using Certificate Authority
@@ -1941,7 +1939,7 @@ Starting an OpenSSL server
 Start an OpenSSL S_Server instance by selecting "Start/Stop Server"  
 
 ```shell
-openssl s_server -tls1_2 -cert server2.crt -key server2_privkey.pem -accept 5001 -verify_return_error -Verify 1 -CAfile /home/pi/optiga-trust-m-explorer/Python_TrustM_GUI/linux-optiga-trust-m/scripts/certificates/OPTIGA_Trust_M_Infineon_Test_CA.pem -sigalgs RSA+SHA256
+openssl s_server -tls1_2 -cert server2.crt -key server2_privkey.pem -accept 5001 -verify_return_error -Verify 1 -CAfile /home/pi/optiga-trust-m-explorer/Python_TrustM_GUI/components/linux-optiga-trust-m/scripts/certificates/OPTIGA_Trust_M_Infineon_Test_CA.pem -sigalgs RSA+SHA256
 
 verify depth is 1, must return a certificate
 Using default temp DH parameters
@@ -1957,7 +1955,7 @@ Start an OpenSSL Client
 Start an OpenSSL Client and connect  with OpenSSL Server by selecting "Start/Stop Client"
 
 ```shell
-openssl s_client -tls1_2 -servername Server2 -connect localhost:5001 -client_sigalgs RSA+SHA256 -provider trustm_provider -provider default -cert client2_rsa.crt -key 0xe0fc:^ -CAfile /home/pi/optiga-trust-m-explorer/Python_TrustM_GUI/linux-optiga-trust-m/scripts/certificates/OPTIGA_Trust_M_Infineon_Test_CA.pem -verify 1
+openssl s_client -tls1_2 -servername Server2 -connect localhost:5001 -client_sigalgs RSA+SHA256 -provider-path /usr/local/lib/ossl-modules -provider trustm_provider -provider default -cert client2_rsa.crt -key 0xe0fc:^ -CAfile /home/pi/optiga-trust-m-explorer/Python_TrustM_GUI/components/linux-optiga-trust-m/scripts/certificates/OPTIGA_Trust_M_Infineon_Test_CA.pem -verify 1
 
 verify depth is 1
 depth=1 C = DE, O = Infineon Technologies AG, OU = OPTIGA(TM), CN = Infineon OPTIGA(TM) Trust M Test CA 000
@@ -2081,7 +2079,7 @@ Provisioning for initial Trust Anchor OID...
 OPTIGA execution time: 0.2486 sec.
 Success!!!
 ========================================================
-'trustm_cert -w 0x0xE0E8 -i /home/pi/optiga-trust-m-explorer/Python_TrustM_GUI/linux-optiga-trust-m/scripts/certificates/sample_ec_256_cert.pem' executed 
+'trustm_cert -w 0x0xE0E8 -i /home/pi/optiga-trust-m-explorer/Python_TrustM_GUI/components/linux-optiga-trust-m/scripts/certificates/sample_ec_256_cert.pem' executed 
 ......
 ++++++++++++++++++++++++++++++++++++++++++++
 Change Target OID Lcs0 to Initialization mode... 
@@ -2285,7 +2283,7 @@ Provisioning for initial Trust Anchor OID...
 OPTIGA execution time: 0.3201 sec.
 Success!!!
 ========================================================
-'trustm_cert -w 0xE0E8 -i /home/pi/optiga-trust-m-explorer/Python_TrustM_GUI/linux-optiga-trust-m/scripts/certificates/sample_ec_256_cert.pem' executed 
+'trustm_cert -w 0xE0E8 -i /home/pi/optiga-trust-m-explorer/Python_TrustM_GUI/components/linux-optiga-trust-m/scripts/certificates/sample_ec_256_cert.pem' executed 
 ++++++++++++++++++++++++++++++++++++++++++++
 Provisioning for trust anchor metadata... 
 'echo $TRUST_ANCHOR_META | xxd -r -p > trust_anchor_metadata.bin' executed 
@@ -2454,7 +2452,7 @@ Provisioning for initial Trust Anchor OID...
 OPTIGA execution time: 0.3872 sec.
 Success!!!
 ========================================================
-'trustm_cert -w 0xE0E8 -i /home/pi/optiga-trust-m-explorer/Python_TrustM_GUI/linux-optiga-trust-m/scripts/certificates/sample_ec_256_cert.pem' executed 
+'trustm_cert -w 0xE0E8 -i /home/pi/optiga-trust-m-explorer/Python_TrustM_GUI/components/linux-optiga-trust-m/scripts/certificates/sample_ec_256_cert.pem' executed 
 ......
 ========================================================
 Symmetric Key [0xe200] 
@@ -2614,7 +2612,7 @@ Provisioning for initial Trust Anchor OID...
 OPTIGA execution time: 0.3139 sec.
 Success!!!
 ========================================================
-'trustm_cert -w 0x0xE0E8 -i /home/pi/optiga-trust-m-explorer/Python_TrustM_GUI/linux-optiga-trust-m/scripts/certificates/sample_ec_256_cert.pem' executed 
+'trustm_cert -w 0x0xE0E8 -i /home/pi/optiga-trust-m-explorer/Python_TrustM_GUI/components/linux-optiga-trust-m/scripts/certificates/sample_ec_256_cert.pem' executed 
 ++++++++++++++++++++++++++++++++++++++++++++
 ......
 Device RSA Private Key x         [0xE0FC] 
@@ -2773,7 +2771,7 @@ Provisioning for initial Trust Anchor OID...
 OPTIGA execution time: 0.3222 sec.
 Success!!!
 ========================================================
-'trustm_cert -w 0x0xE0E8 -i /home/xinyu/optiga-trust-m-explorer/Python_TrustM_GUI/linux-optiga-trust-m/scripts/certificates/sample_ec_256_cert.pem' executed 
+'trustm_cert -w 0x0xE0E8 -i /home/xinyu/optiga-trust-m-explorer/Python_TrustM_GUI/components/linux-optiga-trust-m/scripts/certificates/sample_ec_256_cert.pem' executed 
 ......
 App DataStrucObj type 2     [0xF1E0] 
 
