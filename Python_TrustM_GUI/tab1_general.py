@@ -9,6 +9,9 @@ import os
 import subprocess
 import xml.dom.minidom
 import math
+import re
+import time
+import shutil
 
 class Tab_GEN(wx.Panel):
     
@@ -18,7 +21,12 @@ class Tab_GEN(wx.Panel):
     noDataOIDList = ['E0C2', 'E0C5', 'F1C2', 'E0F0', 'E0F1', 'E0F2', 'E0F3', 'E0FC', 'E0FD', 'E200']
         
     def __init__(self, parent):
-        
+        # Define PBS path variables
+        parent_dir = os.path.dirname(os.getcwd())  
+        self.pbs_dir = os.path.join(parent_dir, config.EXEPATH, "pbs")
+        self.pbs_file = os.path.join(self.pbs_dir, "pbsfile.txt")
+        self.default_pbs_value = "0102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F202122232425262728292A2B2C2D2E2F303132333435363738393A3B3C3D3E3F40"
+
         wx.Panel.__init__(self, parent)
         
         textctrlfont = wx.Font()
@@ -31,7 +39,10 @@ class Tab_GEN(wx.Panel):
         mainhorisizer = wx.BoxSizer(wx.HORIZONTAL)
         
         midsizer = wx.BoxSizer(wx.VERTICAL)
-        gdsizer3 = wx.GridSizer(rows=7, cols=1, vgap=25, hgap=10)
+        gdsizer1 = wx.GridSizer(rows=1, cols=1, vgap=15, hgap=10)
+        gdsizer2 = wx.BoxSizer(wx.HORIZONTAL)
+        gdsizer3 = wx.GridSizer(rows=1, cols=2, vgap=15, hgap=10)
+        gdsizer4 = wx.GridSizer(rows=6, cols=1, vgap=15, hgap=10)
         
         backbuttonsizer = wx.BoxSizer(wx.HORIZONTAL)
         
@@ -47,6 +58,13 @@ class Tab_GEN(wx.Panel):
         self.button_chip.SetFont(buttonfont)
         button_meta = wx.Button(self, 1, 'Read Metadata For All Data Objects', size = wx.Size(350, 50))
         button_meta.SetFont(buttonfont)
+        text_pbs_value = wx.StaticText(self, -1, "PBS Value:", size=wx.Size(100, 30),
+                                           style=wx.ALIGN_CENTER)
+        self.pbsvalue_display = wx.TextCtrl(self, -1)
+        self.pbsvalue_display.SetFont(textctrlfont)
+        self.pbsvalue_display.SetMaxSize((250, -1))
+        button_update = wx.Button(self, 1, 'Update', size = wx.Size(170, 40))
+        button_reset = wx.Button(self, 1, 'Reset', size = wx.Size(170, 40))
         button_data = wx.Button(self, 1, 'Read All Objects Data', size = wx.Size(350, 50))
         button_data.SetFont(buttonfont)
         button_priv = wx.Button(self, 1, 'Read Metadata For Private Key Objects', size = wx.Size(350, 50))
@@ -71,8 +89,6 @@ class Tab_GEN(wx.Panel):
        
         #Add mainhorisizer to mainsizer
         mainsizer.AddSpacer(5)
-        
-
         mainsizer.Add(mainhorisizer, 1, wx.EXPAND)
        
         # Add Sub Sizers to the mainhorisizer
@@ -85,15 +101,21 @@ class Tab_GEN(wx.Panel):
 
         # Add sizers to midsizer
         midsizer.AddSpacer(20)
-        midsizer.Add(gdsizer3, 0, wx.ALIGN_CENTRE | wx.ALL, 10)
+        midsizer.Add(gdsizer1, 0, wx.ALIGN_CENTRE)  # No extra spacing for the first sizer
+        midsizer.Add(gdsizer2, 0, wx.ALIGN_CENTRE | wx.TOP, 15)  # Only top padding
+        midsizer.Add(gdsizer3, 0, wx.ALIGN_CENTRE | wx.TOP, 15)
+        midsizer.Add(gdsizer4, 0, wx.ALIGN_CENTRE | wx.TOP, 15)
         
         midsizer.AddSpacer(20)
         midsizer.Add(backbuttonsizer,1,wx.LEFT | wx.BOTTOM, 5)
         
         #add buttons into gdsizer3
-        gdsizer3.AddMany([
-           # (self.button_step1),
-           (self.button_chip),
+        gdsizer1.Add(self.button_chip)
+        gdsizer2.Add(text_pbs_value,3, wx.LEFT | wx.RIGHT)
+        gdsizer2.Add(self.pbsvalue_display, 8, wx.LEFT | wx.RIGHT | wx.EXPAND, 8)
+        gdsizer3.Add(button_update, 0, wx.LEFT|wx.EXPAND)
+        gdsizer3.Add(button_reset, 0, wx.RIGHT|wx.EXPAND)
+        gdsizer4.AddMany([
            (button_meta),
            (button_data),
            (button_priv),
@@ -101,13 +123,14 @@ class Tab_GEN(wx.Panel):
            (button_status),
            (button_export_config),
        ])
-                       
         # Set Default inputs for Text Boxes      
         # attach objects to the sizer
         # declare and bind events     
         
         #bind events     
         self.button_chip.Bind(wx.EVT_BUTTON, self.OnChipInfo)
+        button_update.Bind(wx.EVT_BUTTON,self.OnUpdate)
+        button_reset.Bind(wx.EVT_BUTTON,self.OnReset)
         button_meta.Bind(wx.EVT_BUTTON, self.OnReadMeta)
         button_data.Bind(wx.EVT_BUTTON, self.OnReadData)
         button_priv.Bind(wx.EVT_BUTTON, self.OnReadPriv)
@@ -222,7 +245,57 @@ class Tab_GEN(wx.Panel):
         self.text_display.AppendText(command_output)
         self.text_display.AppendText("\n'/bin/trustm_read_status' executed\n")
         self.text_display.AppendText("++++++++++++++++++++++++++++++++\n")
-    
+        
+    def OnUpdate(self, event):
+        pbs_value = self.pbsvalue_display.GetValue().strip()  # Get input and remove extra spaces
+        text = ""
+
+        if not os.path.exists(self.pbs_dir):
+            os.makedirs(self.pbs_dir)
+
+        if not pbs_value:
+            pbs_value = self.default_pbs_value
+            text = "PBS file updated with default value.\n"
+        else:
+            text = "PBS file updated with input value. \n"
+
+        # Write to file
+        try:
+            with open(self.pbs_file, 'w') as f:
+                f.write(pbs_value)
+            self.text_display.AppendText(text)
+        except Exception as e:
+            self.text_display.AppendText(f"Error writing to PBS file:\n{str(e)}\n")
+            
+    def OnReset(self, event):
+        if os.path.exists(self.pbs_dir):  # Check if the directory exists
+            try:
+                shutil.rmtree(self.pbs_dir)  # Remove the directory and its contents
+                self.text_display.AppendText("PBS file removed.\n")
+            except Exception as e:
+                self.text_display.AppendText(f"Error removing PBS directory:\n{str(e)}\n")
+                
+        else:
+                self.text_display.AppendText("PBS file does not exist. You may proceed to the next step.\n")
+     
+     
+    def OnReset(self, event):
+        if os.path.isdir(self.pbs_dir):  # Check if the PBS directory exists
+            pbsfile_path = os.path.join(self.pbs_dir, "pbsfile.txt")
+            default_pbs = (
+                "0102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F"
+                "202122232425262728292A2B2C2D2E2F303132333435363738393A3B3C3D3E3F40"
+            )
+            try:
+                with open(pbsfile_path, "w") as f:
+                    f.write(default_pbs)
+                self.text_display.AppendText("pbsfile.txt has been reset to the default PBS value.\n")
+            except Exception as e:
+                self.text_display.AppendText(f"Error writing to pbsfile.txt:\n{str(e)}\n")
+        else:
+                self.text_display.AppendText("PBS directory not found.\n")
+        
+        
     def OnExportConfig(self, evt):
         frame = wx.Frame(None, -1, '*.*')
         frame.SetSize(0,0,200,50)
@@ -1064,8 +1137,6 @@ class Tab_GEN(wx.Panel):
     # then the second parent is the frame, from which we call the destruction
     def OnBack(self, evt):
         self.Parent.Parent.OnCloseWindow(None)
-    
-
 
 class Tab_KEY(wx.Panel):
     def __init__(self, parent):
@@ -2764,7 +2835,809 @@ class Tab_PROV(wx.Panel):
     # then the second parent is the frame, from which we call the destruction
     def OnBack(self, evt):
         self.Parent.Parent.OnCloseWindow(None)
+
+class Tab_MTRPROV(wx.Panel):
+    def __init__(self, parent):
+        wx.Panel.__init__(self, parent)
+        
+        textctrlfont = wx.Font()
+        textctrlfont.SetPointSize(10)
+        buttonfont = wx.Font(11, wx.ROMAN, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
+        
+        self.write_timer = wx.Timer(self)
+        self.write_state = 0  # Track which write operation to perform
+        self.Bind(wx.EVT_TIMER, self.OnWriteTimer, self.write_timer)
+
+        # declare the sizers
+        mainsizer = wx.BoxSizer(wx.VERTICAL)
+        mainhorisizer = wx.BoxSizer(wx.HORIZONTAL)
+        midsizer = wx.BoxSizer(wx.VERTICAL)
+        backbuttonsizer = wx.BoxSizer(wx.HORIZONTAL)
+
+        # Create GridSizers
+        gdsizer1 = wx.BoxSizer(wx.HORIZONTAL)
+        gdsizer2 = wx.BoxSizer(wx.HORIZONTAL)
+        gdsizer3 = wx.BoxSizer(wx.HORIZONTAL)
+        gdsizer4 = wx.GridSizer(rows=1, cols=2, vgap=5, hgap=10)
+        gdsizer6 = wx.BoxSizer(wx.HORIZONTAL)
+        gdsizer7 = wx.BoxSizer(wx.HORIZONTAL)
+        gdsizer8 = wx.BoxSizer(wx.HORIZONTAL)
+        gdsizer9 = wx.BoxSizer(wx.HORIZONTAL)
+        gdlcso = wx.BoxSizer (wx.HORIZONTAL)
+
+
+        self.text_display = wx.TextCtrl(self, -1, style=wx.TE_MULTILINE | wx.TE_READONLY)
+        self.text_display.SetFont(wx.Font(11, wx.FONTFAMILY_TELETYPE, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL))
+        #gdsizer1
+        select_bundle_button = wx.Button(self, -1, 'Select Bundle File', size=wx.Size(150, 38))
+        select_bundle_button.SetFont(buttonfont)
+        self.bundle_display = wx.TextCtrl(self, -1, style=wx.TE_READONLY)
+        self.bundle_display.SetFont(textctrlfont)
+        #gdsizer2
+        select_key_button = wx.Button(self, -1, 'Select Key File', size=wx.Size(150, 38))
+        select_key_button.SetFont(buttonfont)
+        self.keypath_display = wx.TextCtrl(self, -1, style=wx.TE_READONLY)
+        self.keypath_display.SetFont(textctrlfont)
+        #gdsizer3
+        text_transport_key = wx.StaticText(self, -1, "Transport Key:", size=wx.Size(150, 38),
+                                           style=wx.ALIGN_CENTER)
+        self.transvalue_display = wx.TextCtrl(self,-1)
+        self.transvalue_display.SetFont(textctrlfont)
+        button_update = wx.Button(self, 1, 'Update PBS')
+        button_update.SetFont(buttonfont)
+        #gdsizer4
+        button_AutoValue = wx.Button(self, 1, 'Read Auto Value', size=wx.Size(200, 38))
+        button_AutoValue.SetFont(buttonfont)
+        button_PBSValue = wx.Button(self, 2, 'Read PBS Value', size=wx.Size(200, 38))
+        button_PBSValue.SetFont(buttonfont)
+        #gdsizer6
+        select_cdbin_button = wx.Button(self, -1, 'Write CD(F1E0)', size=wx.Size(150, 38))
+        select_cdbin_button.SetFont(buttonfont)
+        self.cdbin_display = wx.TextCtrl(self, -1, value= "to select .bin or .der file", style=wx.TE_READONLY)
+        self.cdbin_display.SetFont(textctrlfont)
+        #gdsizer7
+        select_DAC_button = wx.Button(self, -1, 'DAC(E0E0)', size=wx.Size(150, 38))
+        select_DAC_button.SetFont(buttonfont)
+        self.DACcheckbox = wx.CheckBox(self, label="DAC found in bundle file", style = wx.CHK_2STATE)
+        self.DACcheckbox.Disable()
+        #gdsizer8
+        select_PAI_button = wx.Button(self, -1, 'PAI(E0E8)', size=wx.Size(150, 38))
+        select_PAI_button.SetFont(buttonfont)
+        self.PAIcheckbox = wx.CheckBox(self, label="PAI found in bundle file", style = wx.CHK_2STATE)
+        self.PAIcheckbox.Disable()
+        #gdsizer9
+        write_button = wx.Button(self, -1, 'Write All', size=wx.Size(450, 38))
+        write_button.SetFont(buttonfont)
+        #gdlcso
+        self.Lcsocheckbox = wx.CheckBox(self, label="Set to operational (irreversible)", style = wx.CHK_2STATE)
+        #self.Lcsocheckbox.Disable()
+
+        clearimage = wx.Image(config.IMAGEPATH + "/images/clear.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap()
+        clearbutton = wx.BitmapButton(self, -1, clearimage)
+
+        backimage = wx.Image(config.IMAGEPATH + "/images/back.png", wx.BITMAP_TYPE_PNG).ConvertToBitmap()
+        backbutton = wx.BitmapButton(self, -1, backimage)
+
+        # Add controls to GridSizers
+        gdsizer1.Add(select_bundle_button, 3, wx.LEFT|wx.RIGHT|wx.EXPAND, 8)
+        gdsizer1.Add(self.bundle_display, 5, wx.RIGHT|wx.EXPAND, 8)
+
+        gdsizer2.Add(select_key_button, 3, wx.LEFT|wx.RIGHT|wx.EXPAND, 8)
+        gdsizer2.Add(self.keypath_display, 5, wx.RIGHT|wx.EXPAND, 8)
+        
+        gdsizer3.Add(text_transport_key, 6, wx.LEFT|wx.RIGHT|wx.EXPAND, 8)
+        gdsizer3.Add(self.transvalue_display, 5, wx.EXPAND, 8)
+        gdsizer3.Add(button_update, 5, wx.LEFT|wx.RIGHT|wx.EXPAND, 8)
+
+        gdsizer4.Add(button_AutoValue, 0, wx.LEFT|wx.EXPAND, 8)
+        gdsizer4.Add(button_PBSValue, 0, wx.RIGHT|wx.EXPAND, 8)
+
+        gdsizer6.Add(select_cdbin_button, 3, wx.LEFT|wx.RIGHT|wx.EXPAND, 8)
+        gdsizer6.Add(self.cdbin_display, 5, wx.LEFT|wx.RIGHT|wx.EXPAND, 8)
+        
+        gdsizer7.Add(select_DAC_button, 3, wx.LEFT|wx.RIGHT|wx.EXPAND, 8)
+        gdsizer7.Add(self.DACcheckbox, 5, wx.LEFT|wx.RIGHT|wx.EXPAND, 8)
+        
+        gdsizer8.Add(select_PAI_button, 3, wx.LEFT|wx.RIGHT|wx.EXPAND, 8)
+        gdsizer8.Add(self.PAIcheckbox, 5, wx.LEFT|wx.RIGHT|wx.EXPAND, 8)
+        
+        gdsizer9.Add(write_button, 1, wx.LEFT|wx.RIGHT|wx.EXPAND, 8)
+        
+        gdlcso.Add(self.Lcsocheckbox, 1, wx.LEFT|wx.RIGHT|wx.EXPAND, 8)
+
+        # Add to backbuttonsizer
+        backbuttonsizer.Add(backbutton, 0, wx.ALIGN_LEFT | wx.ALIGN_BOTTOM, 0)
+        backbuttonsizer.AddSpacer(10)
+        backbuttonsizer.Add(clearbutton, 0, wx.ALIGN_LEFT | wx.ALIGN_BOTTOM, 0)
+
+        # Add to midsizer
+        midsizer.Add(gdsizer1, 0, wx.EXPAND|wx.ALL, 4)
+        midsizer.Add(gdsizer2, 0, wx.EXPAND|wx.ALL, 4)
+        midsizer.Add(gdsizer3, 0, wx.EXPAND|wx.ALL, 4)
+        midsizer.Add(gdsizer4, 0, wx.EXPAND|wx.ALL, 4)
+        midsizer.AddSpacer(20)
+        midsizer.Add(gdsizer6, 0, wx.EXPAND|wx.ALL, 4)
+        midsizer.Add(gdsizer7, 0, wx.EXPAND|wx.ALL, 4)
+        midsizer.Add(gdsizer8, 0, wx.EXPAND|wx.ALL, 4)
+        midsizer.Add(gdsizer9, 0, wx.ALIGN_CENTRE | wx.ALL, 4)
+        midsizer.Add(gdlcso, 0, wx.LEFT | wx.ALL, 4)
+        midsizer.Add(backbuttonsizer, 1, wx.LEFT | wx.BOTTOM, 5)
+
+        # Add to mainhorisizer
+        mainhorisizer.Add(midsizer, 1, wx.EXPAND)
+        mainhorisizer.Add(self.text_display, 2, wx.EXPAND | wx.ALL, 5)
+
+        # Add to mainsizer
+        mainsizer.AddSpacer(5)
+        mainsizer.Add(mainhorisizer, 1, wx.EXPAND)
+
+        # Bind events
+        select_bundle_button.Bind(wx.EVT_BUTTON, self.OnSelectBundle)
+        select_key_button.Bind(wx.EVT_BUTTON, self.OnSelectKeyFile)
+        button_update.Bind(wx.EVT_BUTTON, self.OnUpdatePBS)
+
+        button_AutoValue.Bind(wx.EVT_BUTTON, self.OnPrintAuto)
+        button_PBSValue.Bind(wx.EVT_BUTTON, self.OnPrintPBS)
+
+        self.cdbin_display.Bind(wx.EVT_LEFT_DOWN,self.OnClickCD)
+        select_cdbin_button.Bind(wx.EVT_LEFT_DOWN,self.OnWriteCD)
+        select_DAC_button.Bind(wx.EVT_LEFT_DOWN,self.OnWriteDac)
+        select_PAI_button.Bind(wx.EVT_LEFT_DOWN,self.OnWritePai)
+        self.Lcsocheckbox.Bind(wx.EVT_CHECKBOX, self.OnLcsocheckboxChanged)
+        write_button.Bind(wx.EVT_BUTTON, self.OnWriteAll)
+
+        clearbutton.Bind(wx.EVT_BUTTON, self.OnFlush)
+        backbutton.Bind(wx.EVT_BUTTON, self.OnBack)
+
+        # Set tooltips
+        clearbutton.SetToolTip(wx.ToolTip("Clear all textboxes."))
+        backbutton.SetToolTip(wx.ToolTip("Go back to main page."))
+
+        self.SetSizer(mainsizer)
+        mainsizer.Fit(self)
+        
+    def OnKeyValue(self, key_type):
+        #key_type (str): 'auto' or 'pbs'
+        zipped_bundle = self.bundle_display.GetValue().strip()
+        if not zipped_bundle:
+            wx.MessageBox("Please select a bundle file first.", "Error", wx.OK | wx.ICON_ERROR)
+            return None
             
+        transport_key = self.transvalue_display.GetValue().strip()
+        if not transport_key:
+            wx.MessageBox("Transport key cannot be empty.", "Error", wx.OK | wx.ICON_ERROR)
+            return None
+
+        extracted_bundle = os.path.splitext(zipped_bundle)[0]
+        if not os.path.exists(extracted_bundle):
+            wx.MessageBox(f"Bundle file is not correctly extracted: {extracted_bundle}", 
+                        "Error", wx.OK | wx.ICON_ERROR)
+            return None
+            
+        # Get correct file path based on key type
+        filename = "auto_keys.txt" if key_type == "auto" else "PBS_keys.txt"
+        keys_path = os.path.join(extracted_bundle, filename)
+        
+        if not os.path.exists(keys_path):
+            self.OnExtractKeys(extracted_bundle)
+
+        return self.OnExtractChipSpecificKey(keys_path)
+                
+    def OnPrintAuto(self, evt):
+        self.AutoValue = self.OnKeyValue("auto")
+        if self.AutoValue:
+            self.text_display.AppendText(f"\nAuto Value: {self.AutoValue}\n")
+            
+    def OnPrintPBS(self, evt):
+        self.PBSValue = self.OnKeyValue("pbs")
+        if self.PBSValue:
+            self.text_display.AppendText(f"\nPBS Value: {self.PBSValue}\n")
+        
+    def OnExtractChipSpecificKey(self, filename):
+        chipID = str(self.OnChipID())
+        
+        with open(filename, 'r') as f:
+            for line in f:
+                parts = line.strip().split(',')
+                if len(parts) == 2 and parts[0] == chipID:
+                    return parts[1].strip()
+        
+        self.text_display.AppendText(f"Error: Chip ID {chipID} not found in {filename}.\n")
+        return None
+        
+    def OnUpdatePBS(self,event):
+        pbs_value = self.OnKeyValue("pbs")
+        if not pbs_value:
+                self.text_display.AppendText("\nError: Could not get PBS values\n")
+                return
+        try:
+                pbs_dir_path = os.path.join(config.EXEPATH, "pbs")
+                if not os.path.exists(pbs_dir_path):
+                        self.text_display.AppendText(f"pbs file does not exist. Creating the file now.\n")
+                        os.makedirs(pbs_dir_path)
+                pbs_file_path = os.path.join(pbs_dir_path, "pbsfile.txt")
+                with open(pbs_file_path, 'w') as f:
+                        f.write(pbs_value)
+                        self.text_display.AppendText(f"\nPBSfile updated with value:{pbs_value}\n")
+                return True
+        except Exception as e:
+                self.text_display.AppendText(f"\nError updating PBS to file: {str(e)}\n")
+                return False
+
+    def OnSelectBundle(self, evt):
+        chipID = str(self.OnChipID())
+        
+        with wx.FileDialog(self, "Choose bundle file", 
+                          wildcard="7z files (*.7z)|*.7z",
+                          style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as dlg:
+            if dlg.ShowModal() != wx.ID_OK:
+                return
+                
+            bundle_path = dlg.GetPath()
+            bundle_filename = os.path.basename(bundle_path)
+            bundle_name = os.path.splitext(bundle_filename)[0]  # Remove .7z extension
+            self.bundle_display.SetValue(bundle_filename)
+            
+            # Check if already extracted
+            if os.path.exists(bundle_name):
+                self.text_display.AppendText(f"Bundle already extracted\n")
+                self.text_display.AppendText(f"Chip ID: {chipID}\n")
+                return
+
+            try:
+                # Create directory and extract
+                os.makedirs(bundle_name)
+                command_output = subprocess.run(
+                    ["7z", "x", bundle_path, f"-o{bundle_name}"],
+                    capture_output=True,
+                    text=True
+                )
+
+                if command_output.returncode == 0:
+                    self.text_display.AppendText(f"Bundle extracted successfully\n")
+                    self.text_display.AppendText(f"Chip ID: {chipID}\n")
+                else:
+                    self.text_display.AppendText(f"Extraction error: {command_output.stderr}\n")
+                    self.text_display.AppendText(f"Chip ID: {chipID}\n")
+                    if os.path.exists(bundle_name):
+                        shutil.rmtree(bundle_name)
+            except Exception as e:
+                self.text_display.AppendText(f"Error: {str(e)}\n")
+                if os.path.exists(bundle_name):
+                    shutil.rmtree(bundle_name)  
+                    
+    def OnSelectKeyFile(self, event):
+        with wx.FileDialog(self, "Select Key File", wildcard="Text files (*.txt)|*.txt",
+                           style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as fileDialog:
+            if fileDialog.ShowModal() == wx.ID_CANCEL:
+                return  # User canceled
+
+            key_file_path = fileDialog.GetPath()
+            self.keypath_display.SetValue(os.path.basename(key_file_path))  # Display the selected file path
+            
+            # Extract transport key value
+            try:
+                transport_key = self.OnTransKey(key_file_path)
+                self.transvalue_display.SetValue(transport_key)
+            except Exception as e:
+                wx.MessageBox(f"Error: {e}", "Error", wx.ICON_ERROR)
+
+    def OnTransKey(self, key_file_path):
+        try:
+            with open(key_file_path, 'r') as keys_file:
+                for line in keys_file:
+                    if "Transport key value" in line:
+                        return line.split(":")[1].strip()
+                else:
+                    raise ValueError("Transport key value not found in keys file.")
+        except FileNotFoundError:
+            raise FileNotFoundError(f"Key file '{key_file_path}' not found.")
+        except Exception as e:
+            raise RuntimeError(f"Error reading transport key: {e}")
+            
+    def OnExtractKeys(self, extracted_bundle):
+        # Ensure the bundle file is extracted before proceeding
+        if not os.path.exists(extracted_bundle):
+            wx.MessageBox(f"Bundle file is not correctly extracted: {extracted_bundle}", "Error", wx.OK | wx.ICON_ERROR)
+            return    
+            
+        # Locate the _keys.7z file inside the extracted bundle folder
+        reel_id_match = re.match(r'([A-Z0-9]+)_v\d+\.\d+', self.bundle_display.GetValue().strip())
+        if not reel_id_match:
+            self.text_display.AppendText("Error: Invalid bundle filename format.\n")
+            return
+
+        reel_id = reel_id_match.group(1)
+        archive_path = os.path.join(extracted_bundle, f"{reel_id}_keys.7z")
+
+        # Extract keys from the archive using the transport key
+        transport_key = self.transvalue_display.GetValue().strip()
+        command_output = subprocess.run(
+            ["7z", "x", archive_path, f"-o{extracted_bundle}", f"-p{transport_key}"],
+            capture_output=True,
+            text=True
+        )
+
+        if command_output.returncode == 0:
+            self.text_display.AppendText("Auto & PBS keys extracted successfully\n")
+        else:
+            self.text_display.AppendText(f"Error extracting keys archive: \n{command_output.stderr}\n")
+            return
+        
+    def OnClickCD(self, evt):
+        with wx.FileDialog(self, "Choose .bin pr .der file", 
+                          wildcard=".bin and .der files (*.bin;*.der)|*.bin;*.der",
+                          style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as dlg:
+            if dlg.ShowModal() != wx.ID_OK:
+                return
+                
+            self.cd_path = dlg.GetPath()
+            cd_filename = os.path.basename(self.cd_path)
+            self.cdbin_display.SetValue(cd_filename)
+            
+    def OnWriteCD(self, evt):
+        if self.cdbin_display.GetValue()=="to select .bin or .der file":
+            wx.MessageBox("No file selected. Please select a file first.", "Error", wx.OK | wx.ICON_ERROR)
+            return
+                        
+        self.text_display.AppendText("\nWrite CD into 0xf1e0\n")
+        command_output = exec_cmd.execCLI([config.EXEPATH + "/bin/trustm_data", "-e", "-w", "0xf1e0", "-i", self.cd_path, "-X"])
+        if not command_output:  # Handle empty or error case
+            wx.MessageBox("Failed to read the file. Check if it's valid.", "Error", wx.OK | wx.ICON_ERROR)
+            return
+        self.text_display.AppendText(command_output)
+        
+        # Read original binary for comparison
+        try:
+            with open(self.cd_path, 'rb') as f:
+                cert2_data = f.read()
+                self.OnVerifyCD(cert2_data)
+        except Exception as e:
+            self.text_display.AppendText(f"\nError reading binary file: {str(e)}\n")
+
+    
+    def OnChipID(self):
+        # Execute CLI command
+        result = subprocess.run([config.EXEPATH + "/bin/trustm_chipinfo"], 
+                              capture_output=True, 
+                              text=True)
+    
+        # Parse the output
+        output = result.stdout
+    
+        # Extract values using regex
+        batch_match = re.search(r'Batch Number.*?: ((?:0x[0-9a-fA-F]{2}\s*){6})', output)
+        x_coord_match = re.search(r'X-coordinate.*?: 0x([0-9a-fA-F]{4})', output)
+        y_coord_match = re.search(r'Y-coordinate.*?: 0x([0-9a-fA-F]{4})', output)
+    
+        if not all([batch_match, x_coord_match, y_coord_match]):
+            raise ValueError("Could not extract all required values from CLI output")
+    
+        # Process batch number
+        batch_hex = batch_match.group(1).replace('0x', '').replace(' ', '')
+        batch_hex = batch_hex.strip()
+        # Get coordinates
+        x_coord = x_coord_match.group(1)
+        y_coord = y_coord_match.group(1)
+
+        return f"{batch_hex}{x_coord}{y_coord}".upper()
+        
+    def OnCheckbox(self, key_type):
+        #Enables the corresponding checkbox if the .pem file is found or extracted.
+        if key_type == "DAC":
+            self.DACcheckbox.SetValue(True)
+        elif key_type == "PAI":
+            self.PAIcheckbox.SetValue(True)
+        
+    def OnExtractPem(self, key_type):
+        #Extracts only the specific ChipID_keyOID=E0F0_{key_type}.pem file from the archive.
+        #:param key_type: The key type to extract ("DAC" or "PAI").
+        chip_id = str(self.OnChipID())
+        basename_bundle = self.bundle_display.GetValue().strip()
+        extracted_bundle = os.path.splitext(basename_bundle)[0]
+
+        # Validate bundle format
+        reel_id_match = re.match(r'([A-Z0-9]+)_v\d+\.\d+', extracted_bundle)
+        if not reel_id_match:
+            self.text_display.AppendText("Error: Invalid bundle filename format.\n")
+            return
+
+        reel_id = reel_id_match.group(1)
+        archive_filename = f"{reel_id}_keyOID=E0F0_{key_type}.7z"
+        archive_path = os.path.join(extracted_bundle, archive_filename)
+        
+        if key_type=="DACs":
+                target_pem_filename = f"{chip_id}_keyOID=E0F0_DAC.pem"
+        if key_type=="PAI":
+                #target_pem_filename = f"{chip_id}_keyOID=E0F0_PAI.pem"
+                target_pem_filename = f"keyOID=E0F0_PAI.pem"
+        target_pem_path = os.path.join(extracted_bundle, target_pem_filename)
+
+        # Check if the archive file exists
+        if not os.path.exists(archive_path):
+            self.text_display.AppendText(f"Error: Archive {key_type} file not found at {archive_path}\n")
+            return
+
+        # Check if the .pem file already exists to avoid re-extraction
+        if os.path.exists(target_pem_path):
+                if key_type=="DACs":
+
+                        self.OnCheckbox("DAC")
+                if key_type=="PAI":
+                        self.OnCheckbox("PAI")
+                return
+
+        # Step 1: List archive contents to check if target file exists
+        try:
+            list_command = exec_cmd.execCLI(["7z", "l", archive_path])
+
+            # Ensure the output is a string
+            if isinstance(list_command, bytes):
+                output_str = list_command.decode("utf-8")
+            elif isinstance(list_command, str):
+                output_str = list_command
+            else:
+                self.text_display.AppendText(f"Unexpected output format: {type(list_command)}\n")
+                return
+
+            # Check for errors
+            if not output_str or "Error" in output_str:
+                self.text_display.AppendText(f"Error listing archive contents: {output_str}\n")
+                return
+
+            # Check if target file exists in the archive
+            if target_pem_filename not in output_str:
+                self.text_display.AppendText(f"Error: {target_pem_filename} not found inside {archive_filename}\n")
+                return
+
+        except Exception as e:
+            self.text_display.AppendText(f"Error checking archive contents: {str(e)}\n")
+
+
+        # Step 2: Extract only the target .pem file using exec_cmd.execCLI()
+        try:
+            extract_command = exec_cmd.execCLI(
+                ["7z", "x", archive_path, f"-o{extracted_bundle}", target_pem_filename]
+            )
+
+            # Ensure extract_command is a string
+            if isinstance(extract_command, bytes):
+                extract_command = extract_command.decode("utf-8")
+
+            if extract_command is not None and "Error" not in extract_command:
+                self.text_display.AppendText(f"Successfully extracted {target_pem_filename} to: {extracted_bundle}\n")
+                if key_type=="DACs":
+                        self.OnCheckbox("DAC")
+                if key_type=="PAI":
+                        self.OnCheckbox("PAI")
+            else:
+                self.text_display.AppendText(f"Error extracting {target_pem_filename}: {extract_command}\n")
+
+        except Exception as e:
+            self.text_display.AppendText(f"Error extracting .pem file: {str(e)}\n")
+
+    def OnWriteDac(self, evt):
+        self.OnExtractPem("DACs")
+        self.text_display.AppendText("\nWrite DAC into 0xe0e0\n")
+        wx.CallLater(10, self.OnWriteDac1)
+        
+    def OnWriteDac1(self):        
+        # Use the dynamically extracted DAC file path
+        basename_bundle = self.bundle_display.GetValue().strip()
+        extracted_bundle = os.path.splitext(basename_bundle)[0]
+        chip_id = str(self.OnChipID())
+        dac_pem_filename = f"{chip_id}_keyOID=E0F0_DAC.pem"
+        dac_pem_path = os.path.join(extracted_bundle, dac_pem_filename)
+        
+        auto_value = self.OnKeyValue("auto")
+        if not auto_value:
+                self.text_display.AppendText("\nError: Could not get Auto/PBS values\n")
+                return
+        pbs_value = self.OnKeyValue("pbs")
+        if not pbs_value:
+                self.text_display.AppendText("\nError: Could not get Auto/PBS values\n")
+                return
+
+        if not os.path.exists(dac_pem_path):
+            self.text_display.AppendText(f"\nError: Extracted DAC PEM file {dac_pem_path} not found!\n")
+            return
+
+        # Write DAC certificate to 0xe0e0
+        command_output = exec_cmd.execCLI([
+            config.EXEPATH + "/bin/trustm_update_with_PBS_Auto",
+            "-w", "0xe0e0",
+            "-P", str(pbs_value),
+            "-A", str(auto_value),
+            "-c", dac_pem_path,
+            "-e"
+        ])
+        
+        if isinstance(command_output, bytes):
+                command_output = command_output.decode("utf-8")
+        
+        if command_output is None or "Error" in command_output:
+            self.text_display.AppendText(f"\nError executing trustm_cert: {command_output}\n")
+            return
+
+        # Display extracted DAC certificate
+        command2_output = exec_cmd.execCLI(["openssl", "x509", "-in", dac_pem_path, "-text", "-noout"])
+        if isinstance(command2_output , bytes):
+            command2_output  = command2_output .decode("utf-8")
+        if command2_output is None or "Error" in command2_output :
+            self.text_display.AppendText(f"\nError displaying DAC certificate: {command2_output} \n")
+            return
+
+        self.text_display.AppendText("========================================================\n")
+        self.text_display.AppendText(command2_output) 
+        self.text_display.AppendText("========================================================\n")
+        self.OnVerifyDAC(command2_output)
+    
+    def OnWritePai(self, evt):
+        self.OnExtractPem("PAI")  # Extract PAI PEM file
+        self.text_display.AppendText("\nWrite PAI into 0xe0e8\n")
+        wx.CallLater(10, self.OnWritePai1)
+
+    def OnWritePai1(self):        
+        # Use the dynamically extracted PAI file path
+        basename_bundle = self.bundle_display.GetValue().strip()
+        extracted_bundle = os.path.splitext(basename_bundle)[0]
+        chip_id = str(self.OnChipID())
+        
+        #pai_pem_filename = f"{chip_id}_keyOID=E0F0_PAI.pem"
+        pai_pem_filename = f"keyOID=E0F0_PAI.pem"
+        pai_pem_path = os.path.join(extracted_bundle, pai_pem_filename)
+        
+        auto_value = self.OnKeyValue("auto")
+        if not auto_value:
+                self.text_display.AppendText("\nError: Could not get Auto/PBS values\n")
+                return
+        pbs_value = self.OnKeyValue("pbs")
+        if not pbs_value:
+                self.text_display.AppendText("\nError: Could not get Auto/PBS values\n")
+                return
+
+        if not os.path.exists(pai_pem_path):
+            self.text_display.AppendText(f"\nError: Extracted PAI PEM file {pai_pem_path} not found!\n")
+            return
+
+        # Write PAI certificate to 0xe0e8
+        command_output = exec_cmd.execCLI([
+            config.EXEPATH + "/bin/trustm_update_with_PBS_Auto",
+            "-w", "0xe0e8",
+            "-P", str(pbs_value),
+            "-A", str(auto_value),
+            "-c", pai_pem_path,
+            "-e"
+        ])
+        if isinstance(command_output, bytes):
+            command_output = command_output.decode("utf-8")
+        
+        if command_output is None or "Error" in command_output:
+            self.text_display.AppendText(f"\nError executing trustm_cert: {command_output}\n")
+            return  
+
+        # Display extracted PAI certificate
+        command2_output = exec_cmd.execCLI(["openssl", "x509", "-in", pai_pem_path, "-text", "-noout"])
+        if isinstance(command2_output, bytes):
+            command2_output = command2_output.decode("utf-8")
+        if command2_output is None or "Error" in command2_output:
+            self.text_display.AppendText(f"\nError displaying PAI certificate: {command2_output}\n")
+            return
+
+        self.text_display.AppendText("========================================================\n")
+        self.text_display.AppendText(command2_output)  
+        self.text_display.AppendText("========================================================\n")
+        self.OnVerifyPAI(command2_output)
+        
+    def OnWriteAll(self, evt):
+        self.write_all_success = True
+        
+        zipped_bundle = self.bundle_display.GetValue().strip()
+        if not zipped_bundle:
+            wx.MessageBox("Please select a bundle file first.", "Error", wx.OK | wx.ICON_ERROR)
+            return None
+            
+        transport_key = self.transvalue_display.GetValue().strip()
+        if not transport_key:
+            wx.MessageBox("Transport key cannot be empty.", "Error", wx.OK | wx.ICON_ERROR)
+            return None
+            
+        if self.cdbin_display.GetValue() == "to select .bin or .der file":
+            wx.MessageBox("No CD binary file selected. Please select a file first.", 
+                         "Error", wx.OK | wx.ICON_ERROR)
+            self.write_all_success = False
+            return
+
+        # Get and validate PBS value before starting operations
+        pbs_value = self.OnKeyValue("pbs")
+        if not pbs_value:
+            self.text_display.AppendText("\nError: Could not get PBS value\n")
+            return
+
+        self.text_display.AppendText("\n=== Starting Write All Operation ===\n")
+        
+        # Reset state and start first operation
+        self.write_state = 0
+        self.OnWriteTimer(evt)  # Start the sequence immediately
+
+    def OnWriteTimer(self, evt):
+        """Handle sequential write operations"""
+        self.write_timer.Stop()  # Ensure timer is stopped
+        
+        if self.write_state == 0:  # CD Binary
+            self.OnWriteCD(evt)
+            if "Error" in self.text_display.GetValue():
+                self.text_display.AppendText("\n=== Write All Operation Failed at CD Binary ===\n")
+                return
+            self.write_state = 1
+            self.write_timer.Start(500)  # Wait 500ms before DAC
+            
+        elif self.write_state == 1:  # DAC
+            self.OnWriteDac(evt)
+            if "Error" in self.text_display.GetValue():
+                self.text_display.AppendText("\n=== Write All Operation Failed at DAC ===\n")
+                return
+            self.write_state = 2
+            self.write_timer.Start(500)  # Wait 500ms before PAI
+            
+        elif self.write_state == 2:  # PAI
+            self.OnWritePai(evt)
+            if "Error" in self.text_display.GetValue():
+                self.text_display.AppendText("\n=== Write All Operation Failed at PAI ===\n")
+                return
+            self.write_state = 3
+            self.write_timer.Start(500)
+                
+        elif self.write_state == 3: 
+            self.write_state = 0  # Reset state
+            self.text_display.AppendText("\n=== Write All Operation Completed Successfully and Verification Passes===\n")
+            
+    def OnVerifyCD(self, cert2_data): 
+        """Verify CD certificate by comparing with read certificate"""
+        try:
+            # Use current directory for matter_cd.bin
+            matter_cd_path = os.path.join(os.getcwd(), "matter_cd.bin")
+            
+            # Create file if it doesn't exist
+            if not os.path.exists(matter_cd_path):
+                with open(matter_cd_path, 'wb') as f:
+                    f.write(cert2_data)
+
+            # Read current CD binary
+            try:
+                read_output = exec_cmd.execCLI([
+                    config.EXEPATH + "/bin/trustm_data", 
+                    "-r", "0xf1e0", 
+                    "-o", matter_cd_path, "-X"
+                ])
+                if isinstance(read_output, bytes):
+                    read_output = read_output.decode('utf-8', errors='ignore')  # Decode the bytes to string
+                    if "Error" in read_output:
+                        raise Exception(f"Error reading from device: {read_output}")
+            except Exception as exec_error:
+                self.text_display.AppendText(f"Error: {str(exec_error)}\n")
+                self.text_display.AppendText("Verification fails.\n")
+                return False
+            
+            # Compare binary files directly
+            with open(matter_cd_path, 'rb') as f1:
+                cert1_data = f1.read()
+                
+            if cert1_data == cert2_data:
+                self.text_display.AppendText("\nRead back CD and verify success!\n")
+                return True
+            else:
+                self.text_display.AppendText("\nRead back CD and verification fails!\n")
+                return False
+                
+        except Exception as e:
+            self.text_display.AppendText(f"\nError during CD verification: {str(e)}\n")
+            return False
+
+            
+    def OnVerifyPAI(self, cert2_output):
+        """Verify PAI certificate by comparing with read certificate"""
+        current_dir = os.getcwd()
+        matter_pai_path = os.path.join(current_dir, "matter_pai.pem")
+    
+        # Ensure the file exists, if not create it
+        if not os.path.exists(matter_pai_path):
+                exec_cmd.execCLI([config.EXEPATH + "/bin/trustm_cert", "-r", "0xe0e8", "-o", matter_pai_path])
+        
+        cert1_output = exec_cmd.execCLI(["openssl", "x509", "-in", matter_pai_path, "-text", "-noout"])
+        if isinstance(cert1_output, bytes):
+            cert1_output = cert1_output.decode('utf-8')
+            
+        if cert1_output is None or "Error" in cert1_output:
+            self.text_display.AppendText(f"\nError reading PAI certificate: {cert1_output}\n")
+            return False
+            
+        # Clean and standardize outputs for comparison
+        cert1_lines = [line.strip() for line in cert1_output.splitlines() if line.strip()]
+        cert2_lines = [line.strip() for line in cert2_output.splitlines() if line.strip()]
+        
+        # Compare certificates
+        if cert1_lines == cert2_lines:
+            self.text_display.AppendText("\nRead back PAI and verify success!\n")
+            return True
+        else:
+            self.text_display.AppendText("\nRead back PAI and verification fails!\n")
+            # Show differences
+            for i, (line1, line2) in enumerate(zip(cert1_lines, cert2_lines)):
+                if line1 != line2:
+                    self.text_display.AppendText(f"\nDifference at line {i+1}:")
+                    self.text_display.AppendText(f"\nCert1: {line1}")
+                    self.text_display.AppendText(f"\nCert2: {line2}\n")
+            return False
+
+
+    def OnVerifyDAC(self, cert2_output):
+        current_dir = os.getcwd()
+        matter_dac_path = os.path.join(current_dir, "matter_dac.pem")
+ 
+        if not os.path.exists(matter_dac_path):
+                exec_cmd.execCLI([config.EXEPATH + "/bin/trustm_cert", "-r", "0xe0e0", "-o", matter_dac_path])
+                
+        cert1_output = exec_cmd.execCLI(["openssl", "x509", "-in", matter_dac_path, "-text", "-noout"])
+        if isinstance(cert1_output, bytes):
+                cert1_output = cert1_output.decode('utf-8')
+            
+        if cert1_output is None or "Error" in cert1_output:
+            self.text_display.AppendText(f"\nError reading certificate 1: {cert1_output}\n")
+            return False
+            
+        # Clean and standardize outputs for comparison
+        cert1_lines = [line.strip() for line in cert1_output.splitlines() if line.strip()]
+        cert2_lines = [line.strip() for line in cert2_output.splitlines() if line.strip()]
+        
+        # Compare certificates
+        if cert1_lines == cert2_lines:
+            self.text_display.AppendText("\nRead back DAC and verify success!\n")
+            return True
+        else:
+            self.text_display.AppendText("\nRead back DAC and verification fails!\n")
+            # Optional: Show differences
+            for i, (line1, line2) in enumerate(zip(cert1_lines, cert2_lines)):
+                if line1 != line2:
+                    self.text_display.AppendText(f"\nDifference at line {i+1}:")
+                    self.text_display.AppendText(f"\nCert1: {line1}")
+                    self.text_display.AppendText(f"\nCert2: {line2}\n")
+            return False
+
+    def OnLcsocheckboxChanged(self, event):
+        if self.Lcsocheckbox.IsChecked():
+            wx.MessageBox("Provisioning OIDs to operational mode...", "Info", wx.OK | wx.ICON_INFORMATION)
+            self.provision_oids()
+
+    def provision_oids(self):
+        #Provision the OIDs to change condition conf:e140.
+        target_oids = ["f1e0", "e0e8"]
+        target_oid_meta = "2008d00320e140d10100"  # Metadata with conf:e140
+        
+        for oid in target_oids:
+            try:
+                # Convert metadata to binary file
+                meta_filename = f"conf_pbs_metadata_{oid}.bin"
+                with open(meta_filename, "wb") as meta_file:
+                    meta_file.write(bytes.fromhex(target_oid_meta))
+                
+                # Write metadata to the OID
+                cmd_write = ["trustm_metadata", "-w", f"0x{oid}", "-F", meta_filename]
+                subprocess.run(cmd_write, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                
+                # Verify the change
+                cmd_read = ["trustm_metadata", "-r", f"0x{oid}"]
+                result = subprocess.run(cmd_read, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                
+                wx.MessageBox(f"Successfully provisioned OID 0x{oid}:\n{result.stdout.decode()}", "Success", wx.OK | wx.ICON_INFORMATION)
+            except subprocess.CalledProcessError as e:
+                wx.MessageBox(f"Error provisioning OID 0x{oid}:\n{e.stderr.decode()}", "Error", wx.OK | wx.ICON_ERROR)
+            
+    def OnFlush(self, evt):
+        self.text_display.Clear()
+
+    def OnBack(self, evt):
+        self.Parent.Parent.OnCloseWindow(None)
 
 class Tab1Frame(wx.Frame):
     
@@ -2781,14 +3654,16 @@ class Tab1Frame(wx.Frame):
         self.tab2_key = Tab_KEY(self.tab_base)
         self.tab3_app = Tab_APP(self.tab_base)
         self.tab4_meta = Tab_META(self.tab_base)
-        self.tab5_prov = Tab_PROV(self.tab_base)        
+        self.tab5_v3prov = Tab_PROV(self.tab_base)
+        self.tab6_mtrprov = Tab_MTRPROV(self.tab_base)        
 
         # Add tabs
         self.tab_base.AddPage(self.tab1_gen, 'General')
         self.tab_base.AddPage(self.tab2_key, 'Private Key and Cert OID')        
         self.tab_base.AddPage(self.tab3_app, 'Application Data OID')
         self.tab_base.AddPage(self.tab4_meta, 'Write Metadata')
-        self.tab_base.AddPage(self.tab5_prov, 'Matter DAC Provisioning')        
+        self.tab_base.AddPage(self.tab5_v3prov, 'Matter DAC Provisioning')    
+        self.tab_base.AddPage(self.tab6_mtrprov, "MTR Matter Provisioning")    
 
         self.Show(True)
               

@@ -187,7 +187,7 @@ Execute "start_gui.sh" and select execute in terminal.
 A terminal will pop up and the OPTIGA Trust M Explorer interface will be open.
 
 | ![](images/Setup/MainScreen.png) |
-| ------------------------------------------------------- |
+| -------------------------------- |
 
 [^Figure 10]: Home Screen of OPTIGA Trust M Explorer
 

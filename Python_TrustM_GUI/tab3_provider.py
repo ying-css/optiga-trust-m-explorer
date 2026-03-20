@@ -125,7 +125,6 @@ def kill_child_processes(parent_pid, sig=signal.SIGTERM):
         else:
             print("ps command returned %d" % retcode)
 
-
 class Tab_ECC_CS(wx.Panel):
     def __init__(self, parent):
         wx.Panel.__init__(self, parent)
@@ -814,6 +813,338 @@ class Tab_RSA_CS(wx.Panel):
         self.server_proc.stdin.write((write_value+"\n").encode())
         self.server_proc.stdin.flush()
 
+class Tab_RSA_MISC(wx.Panel):
+    def __init__(self, parent):
+        wx.Panel.__init__(self, parent)
+
+        # declare the sizers
+        mainsizer = wx.BoxSizer(wx.VERTICAL)
+        input_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        button_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        datainput_blurb_sizer = wx.BoxSizer(wx.HORIZONTAL)
+
+        # instantiate the objects
+        self.data_input = wx.TextCtrl(self, -1)
+        data_input_blurb = wx.StaticText(self, -1, "Data Input: ")
+        self.command_out = wx.TextCtrl(self, -1, style=(wx.TE_MULTILINE | wx.TE_READONLY), size=(500, 500))
+        self.command_out.SetFont(wx.Font(12, wx.FONTFAMILY_TELETYPE, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL))
+        button_gen_rsakey = wx.Button(self, -1, 'Generate RSA Keypair', size = (-1, 47))
+        button_rsa_enc = wx.Button(self, -1, 'RSA Encrypt', size = (-1, 47))
+        button_rsa_dec = wx.Button(self, -1, 'RSA Decrypt', size = (-1, 47))
+        button_rsa_sign = wx.Button(self, -1, 'RSA Signing', size = (-1, 47))
+        button_rsa_verify = wx.Button(self, -1, 'RSA Verification', size = (-1, 47))
+        clearimage = wx.Image('../images/clear.png', wx.BITMAP_TYPE_PNG).ConvertToBitmap()
+        clearbutton = wx.BitmapButton(self, -1, clearimage)
+        # ~clearbutton = wx.BitmapButton(self, -1, img.clear.getBitmap())
+        
+        backimage = wx.Image('../images/back.png', wx.BITMAP_TYPE_PNG).ConvertToBitmap()
+        backbutton = wx.BitmapButton(self, -1, backimage)
+        # ~backbutton = wx.BitmapButton(self, -1, img.back.getBitmap())
+
+        # attach the ui elements to the main sizer
+        mainsizer.AddSpacer(5)
+        mainsizer.Add(input_sizer, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 5)
+        mainsizer.Add(button_sizer, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 5)
+        mainsizer.Add(self.command_out, 1, wx.EXPAND | wx.TOP, 5)
+        
+        datainput_blurb_sizer.Add(data_input_blurb, 1, wx.EXPAND | wx.CENTER | wx.LEFT, 10)
+        input_sizer.Add(datainput_blurb_sizer, 1, wx.ALIGN_CENTER | wx.ALL, 5)
+        input_sizer.Add(self.data_input, 8, wx.EXPAND | wx.ALL, 5)
+        
+        button_sizer.Add(button_gen_rsakey, 1, wx.ALIGN_CENTER | wx.ALL, 5)
+        button_sizer.Add(button_rsa_enc, 1, wx.ALIGN_CENTER | wx.ALL, 5)
+        button_sizer.Add(button_rsa_dec, 1, wx.ALIGN_CENTER | wx.ALL, 5)
+        button_sizer.Add(button_rsa_sign, 1, wx.ALIGN_CENTER | wx.ALL, 5)
+        button_sizer.Add(button_rsa_verify, 1, wx.ALIGN_CENTER | wx.ALL, 5)
+        button_sizer.Add(clearbutton, 0, wx.ALL, 5)
+        button_sizer.Add(backbutton, 0, wx.ALL, 5)
+
+        # Set tooltips
+        button_gen_rsakey.SetToolTip(wx.ToolTip("Generate a RSA key pair."))
+        button_rsa_enc.SetToolTip(wx.ToolTip("Encrypt the data"))
+        button_rsa_dec.SetToolTip(wx.ToolTip("Decrypt the data"))
+        button_rsa_sign.SetToolTip(wx.ToolTip("Sign the data input with the private key"))
+        button_rsa_verify.SetToolTip(wx.ToolTip("Verify the signature with the public key"))
+        clearbutton.SetToolTip(wx.ToolTip("Clear all textboxes."))
+
+        # declare and bind events
+        self.Bind(wx.EVT_BUTTON, self.OnClear, clearbutton)
+        self.Bind(wx.EVT_BUTTON, self.OnGenKey1, button_gen_rsakey)
+        self.Bind(wx.EVT_BUTTON, self.OnEnc1, button_rsa_enc)
+        self.Bind(wx.EVT_BUTTON, self.OnDec1, button_rsa_dec)
+        self.Bind(wx.EVT_BUTTON, self.OnSign1, button_rsa_sign)
+        self.Bind(wx.EVT_BUTTON, self.OnVerify, button_rsa_verify)
+        self.Bind(wx.EVT_BUTTON, self.OnBack, backbutton)
+
+        self.data_input.write("Hello World")
+        self.SetSizer(mainsizer)
+
+    def OnGenKey1(self, evt):
+        self.command_out.write("Setting up Trust M...\n")
+        wx.CallLater(10, self.OnGenKey)
+    
+    def OnGenKey(self):
+        exec_cmd.execCLI(["rm", "-f", "e0fd_pub.pem"])
+        exec_cmd.execCLI(["rm", "-f", "mycipher"])
+        exec_cmd.execCLI(["rm", "-f", "mysig"])
+        
+        command_output = exec_cmd.execCLI([
+        "openssl", "pkey",
+        "-provider", "trustm_provider",
+        "-in", "0xe0fd:*:NEW:0x42:0x13",
+        "-pubout", "-out", "e0fd_pub.pem"
+        ])
+        self.command_out.AppendText(f"'openssl pkey -provider trustm_provider -in 0xe0fd:*:NEW:0x42:0x13 -pubout -out e0fd_pub.pem' executed \n")
+
+        #read the e0fd_pub.pem
+        self.command_out.AppendText("e0fd_pub.pem contains: \n")
+        with open("e0fd_pub.pem", 'r') as filehandle:
+                self.command_out.AppendText(filehandle.read())
+        self.command_out.AppendText("++++++++++++++++++++++++++++++++++++++++++++\n")
+    
+    def OnEnc1(self, evt):
+        self.command_out.write("Encrypting Data...\n")
+        wx.CallLater(10, self.OnEnc)
+    
+    def OnEnc(self):
+        if (self.data_input.GetValue()):
+            input_data = self.data_input.GetValue()
+        else:
+            self.command_out.AppendText("Input data cannot be blank")
+            return
+        data_file = open("input_data.txt", "w")
+        data_file.write(input_data)
+        data_file.close()
+        exec_cmd.execCLI([
+            "openssl", "pkeyutl",
+            "-provider", "trustm_provider",
+            "-inkey", "0xe0fd:^",
+            "-encrypt",
+            "-in", "input_data.txt",
+            "-out", "mycipher",
+        ])
+        
+        self.command_out.AppendText("'openssl pkeyutl -provider trustm_provider -inkey 0xe0fd:^ -encrypt -in input_data.txt -out mycipher' executed \n")
+        self.command_out.AppendText("mycipher contains: \n")
+        command_output = exec_cmd.execCLI(["xxd", "mycipher"])
+        self.command_out.AppendText(command_output)
+        self.command_out.AppendText("++++++++++++++++++++++++++++++++++++++++++++\n")
+            
+    def OnDec1(self, evt):
+        self.command_out.write("Decrypting Data...\n")
+        wx.CallLater(10, self.OnDec)
+        
+    def OnDec(self):
+        command_output = exec_cmd.execCLI([
+            "openssl", "pkeyutl",
+            "-provider", "trustm_provider",
+            "-inkey", "0xe0fd:^",
+            "-decrypt",
+            "-in", "mycipher",
+            "-out", "mydecipher",
+        ])
+
+        try:
+            with open("mydecipher", "rb") as f:
+                plaintext = f.read().decode('utf-8', errors='replace')
+        except Exception as e:
+            plaintext = f"[Error reading mydecipher: {e}]"
+
+        self.command_out.AppendText("Decrypted message:\n")
+        self.command_out.AppendText(plaintext + "\n")
+        self.command_out.AppendText("\n'openssl pkeyutl -provider trustm_provider -inkey 0xe0fd:^ -decrypt -in mycipher -out mydecipher' executed \n")
+        self.command_out.AppendText("++++++++++++++++++++++++++++++++++++++++++++\n")   
+
+    def OnSign1(self, evt):
+        self.command_out.write("Signing Data Input with Private Key...\n")
+        wx.CallLater(10, self.OnSign)
+
+    def OnSign(self):
+        if (self.data_input.GetValue()):
+            input_data = self.data_input.GetValue()
+        else:
+            self.command_out.AppendText("Input data cannot be blank\n")
+            return
+        data_file = open("input_data.txt", "w")
+        data_file.write(input_data)
+        data_file.close()
+                
+        cmd = "openssl pkeyutl -provider trustm_provider -inkey 0xe0fd:^  -sign -rawin -in input_data.txt -out mysig"
+        ps_command = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+        command_output = ps_command.stdout.read()
+        retcode = ps_command.wait()        
+
+        self.command_out.AppendText(cmd +" executed \n")
+        self.command_out.AppendText("mysig contains: \n")
+        command_output = exec_cmd.execCLI(["xxd", "mysig", ])
+        self.command_out.AppendText(command_output.decode(errors="ignore"))
+        self.command_out.AppendText("++++++++++++++++++++++++++++++++++++++++++++\n")
+            
+    def OnVerify(self, evt):
+        input_data = self.data_input.GetValue()
+        if(input_data==""):
+            self.command_out.AppendText("Input data cannot be blank\n")
+            return
+        data_file = open("input_data.txt", "w")
+        data_file.write(input_data)
+        data_file.close()
+        
+        command_output = exec_cmd.execCLI([
+            "openssl", "pkeyutl",
+            "-pubin", "-inkey", "e0fd_pub.pem", 
+            "-verify", "-rawin",
+            "-in", "input_data.txt",
+            "-sigfile", "mysig",
+        ])
+        
+        self.command_out.AppendText(command_output.decode("utf-8", errors="ignore"))
+        self.command_out.AppendText("'openssl pkeyutl -pubin -inkey e0fd_pub.pem -verify -rawin -in input_data.txt -sigfile mysig' executed \n")
+        self.command_out.AppendText("++++++++++++++++++++++++++++++++++++++++++++\n")
+
+    def OnClear(self, evt):
+        self.command_out.Clear()
+
+    # Calling parent of the parent, as direct parent is the notebook,
+    # then the second parent is the frame, from which we call the destruction
+    def OnBack(self, evt):
+        self.Parent.Parent.OnCloseWindow(None)
+        
+ 
+class Tab_ECC_MISC(wx.Panel):
+    def __init__(self, parent):
+        wx.Panel.__init__(self, parent)
+
+        # declare the sizers
+        mainsizer = wx.BoxSizer(wx.VERTICAL)
+        input_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        button_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        datainput_blurb_sizer = wx.BoxSizer(wx.HORIZONTAL)
+
+        # instantiate the objects
+        self.data_input = wx.TextCtrl(self, -1)
+        data_input_blurb = wx.StaticText(self, -1, "Data Input: ")
+        self.command_out = wx.TextCtrl(self, -1, style=(wx.TE_MULTILINE | wx.TE_READONLY), size=(500, 500))
+        self.command_out.SetFont(wx.Font(12, wx.FONTFAMILY_TELETYPE, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL))
+        button_gen_rsakey = wx.Button(self, -1, 'Generate ECC Keypair', size = (-1, 47))
+        button_rsa_sign = wx.Button(self, -1, 'ECC Signing', size = (-1, 47))
+        button_rsa_verify = wx.Button(self, -1, 'ECC Verification', size = (-1, 47))
+        clearimage = wx.Image('../images/clear.png', wx.BITMAP_TYPE_PNG).ConvertToBitmap()
+        clearbutton = wx.BitmapButton(self, -1, clearimage)
+        # ~clearbutton = wx.BitmapButton(self, -1, img.clear.getBitmap())
+        
+        backimage = wx.Image('../images/back.png', wx.BITMAP_TYPE_PNG).ConvertToBitmap()
+        backbutton = wx.BitmapButton(self, -1, backimage)
+        # ~backbutton = wx.BitmapButton(self, -1, img.back.getBitmap())
+
+        # attach the ui elements to the main sizer
+        mainsizer.AddSpacer(5)
+        mainsizer.Add(input_sizer, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 5)
+        mainsizer.Add(button_sizer, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 5)
+        mainsizer.Add(self.command_out, 1, wx.EXPAND | wx.TOP, 5)
+        
+        datainput_blurb_sizer.Add(data_input_blurb, 1, wx.EXPAND | wx.CENTER | wx.LEFT, 10)
+        input_sizer.Add(datainput_blurb_sizer, 1, wx.ALIGN_CENTER | wx.ALL, 5)
+        input_sizer.Add(self.data_input, 8, wx.EXPAND | wx.ALL, 5)
+        
+        button_sizer.Add(button_gen_rsakey, 1, wx.ALIGN_CENTER | wx.ALL, 5)
+        button_sizer.Add(button_rsa_sign, 1, wx.ALIGN_CENTER | wx.ALL, 5)
+        button_sizer.Add(button_rsa_verify, 1, wx.ALIGN_CENTER | wx.ALL, 5)
+        button_sizer.Add(clearbutton, 0, wx.ALL, 5)
+        button_sizer.Add(backbutton, 0, wx.ALL, 5)
+
+        # Set tooltips
+        button_gen_rsakey.SetToolTip(wx.ToolTip("Generate a ECC key pair."))
+        button_rsa_sign.SetToolTip(wx.ToolTip("Sign the data input with the private key"))
+        button_rsa_verify.SetToolTip(wx.ToolTip("Verify the signature with the public key"))
+        clearbutton.SetToolTip(wx.ToolTip("Clear all textboxes."))
+
+        # declare and bind events
+        self.Bind(wx.EVT_BUTTON, self.OnClear, clearbutton)
+        self.Bind(wx.EVT_BUTTON, self.OnGenKey1, button_gen_rsakey)
+        self.Bind(wx.EVT_BUTTON, self.OnSign1, button_rsa_sign)
+        self.Bind(wx.EVT_BUTTON, self.OnVerify, button_rsa_verify)
+        self.Bind(wx.EVT_BUTTON, self.OnBack, backbutton)
+
+        self.data_input.write("Hello World")
+        self.SetSizer(mainsizer)
+
+    def OnGenKey1(self, evt):
+        self.command_out.write("Setting up Trust M...\n")
+        wx.CallLater(10, self.OnGenKey)
+        
+    def OnGenKey(self):
+        exec_cmd.execCLI(["rm", "-f", "e0f3_pub.pem"])
+        exec_cmd.execCLI(["rm", "-f", "mycipher"])
+        exec_cmd.execCLI(["rm", "-f", "mysig"])
+        
+        command_output = exec_cmd.execCLI([
+        "openssl", "pkey",
+        "-provider", "trustm_provider",
+        "-in", "0xe0f3:*:NEW:0x03:0x33",
+        "-pubout", "-out", "e0f3_pub.pem"
+        ])
+
+        self.command_out.AppendText(f"'openssl pkey -provider trustm_provider -in 0xe0f3:*:NEW:0x03:0x33 -pubout -out e0f3_pub.pem' executed \n")
+
+        #read the e0fd_pub.pem
+        self.command_out.AppendText("e0fd_pub.pem contains: \n")
+        with open("e0fd_pub.pem", 'r') as filehandle:
+                self.command_out.AppendText(filehandle.read())
+        self.command_out.AppendText("++++++++++++++++++++++++++++++++++++++++++++\n")
+
+    def OnSign1(self, evt):
+        self.command_out.write("Signing Data Input with Private Key...\n")
+        wx.CallLater(10, self.OnSign)
+
+    def OnSign(self):
+        if (self.data_input.GetValue()):
+            input_data = self.data_input.GetValue()
+        else:
+            self.command_out.AppendText("Input data cannot be blank\n")
+            return
+        data_file = open("input_data.txt", "w")
+        data_file.write(input_data)
+        data_file.close()
+        cmd = "openssl pkeyutl -provider trustm_provider -inkey 0xe0f3:^  -sign -rawin -in input_data.txt -out mysig"
+        ps_command = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+        command_output = ps_command.stdout.read()
+        retcode = ps_command.wait()        
+
+        self.command_out.AppendText(cmd +" executed \n")
+        self.command_out.AppendText("mysig contains: \n")
+        command_output = exec_cmd.execCLI(["xxd", "mysig", ])
+        self.command_out.AppendText(command_output.decode(errors="ignore"))
+        self.command_out.AppendText("++++++++++++++++++++++++++++++++++++++++++++\n")
+            
+    def OnVerify(self, evt):
+        input_data = self.data_input.GetValue()
+        if(input_data==""):
+            self.command_out.AppendText("Input data cannot be blank\n")
+            return
+        data_file = open("input_data.txt", "w")
+        data_file.write(input_data)
+        data_file.close()
+        
+        command_output = exec_cmd.execCLI([
+            "openssl", "pkeyutl",
+            "-pubin", "-inkey", "e0f3_pub.pem", 
+            "-verify", "-rawin",
+            "-in", "input_data.txt",
+            "-sigfile", "mysig",
+        ])
+        
+        self.command_out.AppendText(command_output.decode("utf-8", errors="ignore"))
+        self.command_out.AppendText("'openssl pkeyutl -pubin -inkey e0f3_pub.pem -verify -rawin -in input_data.txt -sigfile mysig' executed \n")
+        self.command_out.AppendText("++++++++++++++++++++++++++++++++++++++++++++\n")
+
+    def OnClear(self, evt):
+        self.command_out.Clear()
+
+    # Calling parent of the parent, as direct parent is the notebook,
+    # then the second parent is the frame, from which we call the destruction
+    def OnBack(self, evt):
+        self.Parent.Parent.OnCloseWindow(None)
+        
 
 class Tab_RNG(wx.Panel):
     def __init__(self, parent):
@@ -992,15 +1323,19 @@ class Tab3Frame(wx.Frame):
 
         # Instantiate all objects
         self.tab_base = wx.Notebook(self, id=wx.ID_ANY, style=wx.NB_TOP)
-        self.tab2_ecc_cs = Tab_ECC_CS(self.tab_base)
-        self.tab2_rsa_cs = Tab_RSA_CS(self.tab_base)        
-        self.tab4_rng = Tab_RNG(self.tab_base)
+        self.tab1_ecc_cs = Tab_ECC_CS(self.tab_base)
+        self.tab2_rsa_cs = Tab_RSA_CS(self.tab_base)   
+        self.tab3_rsa_misc = Tab_RSA_MISC(self.tab_base)  
+        self.tab4_ecc_misc = Tab_ECC_MISC(self.tab_base)  
+        self.tab5_rng = Tab_RNG(self.tab_base)
         
 
         # Add tabs
-        self.tab_base.AddPage(self.tab2_ecc_cs, 'ECC (Client/Server)')
+        self.tab_base.AddPage(self.tab1_ecc_cs, 'ECC (Client/Server)')
         self.tab_base.AddPage(self.tab2_rsa_cs, 'RSA (Client/Server)')        
-        self.tab_base.AddPage(self.tab4_rng, 'RNG')
+        self.tab_base.AddPage(self.tab3_rsa_misc, 'RSA (Enc/Dec/Sign/Verify)') 
+        self.tab_base.AddPage(self.tab4_ecc_misc, 'ECC (Sign/Verify)')          
+        self.tab_base.AddPage(self.tab5_rng, 'RNG')
 
         self.Bind(wx.EVT_CLOSE, self.OnCloseWindow)
         self.Show(True)
@@ -1010,7 +1345,7 @@ class Tab3Frame(wx.Frame):
 
     def OnCloseWindow(self, evt):
         checkProcesses()
-        self.tab2_ecc_cs.Destroy()
+        self.tab1_ecc_cs.Destroy()
         self.tab2_rsa_cs.Destroy()        
         self.Parent.Show()
         self.Destroy()
