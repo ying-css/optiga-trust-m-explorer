@@ -27,7 +27,7 @@ echo "-----> Clone components (no submodules)"
 COMP_DIR="${GUI_PATH}/components"
 LINUX_TOOLS_PATH="${COMP_DIR}/linux-optiga-trust-m"
 OPENSSL_PATH="${COMP_DIR}/optiga-trust-m-openssl"
-OPENSSL_REF="${OPENSSL_REF:-master}"
+OPENSSL_REF="${OPENSSL_REF:-main}"
 
 mkdir -p "$COMP_DIR"
 
@@ -133,6 +133,7 @@ echo "-----> Build Trust M Linux Tools"
 sudo make uninstall
 make -j5
 sudo make install
+sudo ldconfig
 echo "-----> Build Protected Update Set tool"
 cd ex_protected_update_data_set/Linux/
 make clean
@@ -144,8 +145,23 @@ cd "$OPENSSL_PATH"
 
 sudo rm -f /usr/lib/aarch64-linux-gnu/ossl-modules/trustm_provider.so
 
+OPENSSL_OPTIGA_DIR="${OPENSSL_PATH}/external/optiga-trust-m"
+
+if [ ! -f "${OPENSSL_OPTIGA_DIR}/extras/pal/linux/pal.c" ]; then
+  echo "-----> Fetching missing dependency: ${OPENSSL_OPTIGA_DIR}"
+  rm -rf "$OPENSSL_OPTIGA_DIR"
+  git clone https://github.com/Infineon/optiga-trust-m.git "$OPENSSL_OPTIGA_DIR"
+  git -C "$OPENSSL_OPTIGA_DIR" submodule update --init --recursive
+fi
+
+# fail if still missing
+if [ ! -f "${OPENSSL_OPTIGA_DIR}/extras/pal/linux/pal.c" ]; then
+  echo "FATAL: ${OPENSSL_OPTIGA_DIR} still not populated; aborting." >&2
+  exit 1
+fi
+
 if [ -f CMakeLists.txt ]; then
-  cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local
+  cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
   cmake --build build -j5
   sudo cmake --install build
 else

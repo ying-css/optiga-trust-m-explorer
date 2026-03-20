@@ -288,7 +288,7 @@ class Tab_ECC_CS(wx.Panel):
         self.text_server.AppendText("Creating Server ECC Private Key... \n")
         cmd = [
         "openssl", "genpkey",
-        "-provider-path", "/usr/local/lib/ossl-modules",
+        "-provider-path", "/usr/lib/aarch64-linux-gnu/ossl-modules/trustm_provider.so"
         "-provider", "trustm_provider",
         "-provider", "default",
         "-algorithm", "EC",
@@ -304,7 +304,7 @@ class Tab_ECC_CS(wx.Panel):
         self.text_server.AppendText("Creating Server ECC Keys CSR... \n")
         cmd = [
         "openssl", "req",
-        "-provider-path", "/usr/local/lib/ossl-modules",
+        "-provider-path", "/usr/lib/aarch64-linux-gnu/ossl-modules/trustm_provider.so",
         "-provider", "trustm_provider",
         "-provider", "default",
         "-new",
