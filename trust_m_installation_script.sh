@@ -33,10 +33,10 @@ mkdir -p "$COMP_DIR"
 
 # Clone + checkout linux-optiga-trust-m (cli_dev)
 if [ ! -d "$LINUX_TOOLS_PATH/.git" ]; then
-  git clone https://github.com/ying-css/linux-optiga-trust-m.git "$LINUX_TOOLS_PATH"
+  git clone https://github.com/Infineon/linux-optiga-trust-m.git "$LINUX_TOOLS_PATH"
 fi
 git -C "$LINUX_TOOLS_PATH" fetch --all --tags
-git -C "$LINUX_TOOLS_PATH" checkout cli_dev
+git -C "$LINUX_TOOLS_PATH" checkout CLI_dev
 git -C "$LINUX_TOOLS_PATH" pull --ff-only || true
 
 TRUSTM_LIB_COMMIT="$(git -C "$LINUX_TOOLS_PATH" ls-tree HEAD trustm_lib | awk '{print $3}')"
